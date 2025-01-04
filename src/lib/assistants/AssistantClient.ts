@@ -1,13 +1,13 @@
 import type { AssistantConfig } from "./AssistantConfig";
 import { apiLimit, apiLimitCount, incrementApiLimitCount } from "./ApiLimitStore";
 import { get } from "svelte/store";
+import type { ToolResult } from "./Tools";
+import { createPersonaFunctionName, sendInstructionsFunctionName } from "./configs/projectLeadAssistant";
 
 export type StreamCallbacks = {
   onProgressText?: (progressText: string) => void;
   onMessageCreated?: (assistantId: string, messageId: string) => void;
   onMessageDelta?: (messageId: string, delta: string) => void;
-  onToolCallCreated?: (toolCall: { type: string }) => void;
-  onToolCallDelta?: (delta: any, snapshot: any) => void;
   onError?: (error: Error) => void;
   onComplete?: () => void;
 };
@@ -225,7 +225,11 @@ export class AssistantClient {
             }
 
             if (event) {
-              this.handleEvent(runId, event, data, callbacks);
+              if (!runId) {
+                console.warn(`Ignoring Event. No runId yet for event: ${event}`);
+              } else {
+                this.handleEvent(runId, event, data, callbacks);
+              }
               event = undefined;
             } else {
               throw new Error(`Data without event: ${line}`);
@@ -238,10 +242,76 @@ export class AssistantClient {
     }
   }
 
-  private async handleEvent(runId: string | undefined, eventType: string, data: any, callbacks: StreamCallbacks) {
+  private async handleToolCall(toolCall: any): Promise<string>
+  {
+    if (toolCall.type !== 'function') {
+      console.warn('Unexpected tool call type:', toolCall.type);
+      return 'unknown';
+    }
+
+    const name = toolCall.function.name;
+    const parameters = JSON.parse(toolCall.function.arguments);
+
+    if (name === createPersonaFunctionName) {
+      const { personaId, name, expertise, instructions } = parameters;
+
+      console.log('Creating persona', personaId, name, expertise, instructions);
+
+      // TODO: await until persona is created and has done the task
+      return `Created persona ${name} with expertise ${expertise}. They will get back to you ASAP!`;
+    } else if (name === sendInstructionsFunctionName) {
+      const { personaId, name, expertise, instructions, emoji } = parameters;
+
+      console.log('Sending instructions to persona', personaId, name, expertise, instructions, emoji);
+
+      // TODO: await until persona has done the task
+      return `Sent instructions to persona ${personaId}. They will get back to you ASAP!`;
+    } else {
+      console.warn('Unhandled tool call:', toolCall);
+      return 'unknown';
+    }
+  }
+
+  private async submitToolOutputs(runId: string, threadId: string, toolOutputs: ToolResult[])
+  {
+    await this.checkLimit();
+
+    const data = {
+      tool_outputs: toolOutputs
+    };
+
+    const response = await this.fetch(`/threads/${threadId}/runs/${runId}/submit_tool_outputs`, {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+
+    const result = await response.json();
+
+    return result;
+  }
+
+  private async handleEvent(runId: string, eventType: string, data: any, callbacks: StreamCallbacks) {
     switch (eventType) {
       case 'thread.run.requires_action':
-        callbacks.onToolCallCreated?.(data.required_action.submit_tool_outputs.tool_calls[0]);
+        callbacks.onProgressText?.('Using tools...');
+
+        console.log(data);
+
+        const toolOutputs: ToolResult[] = await Promise.all(data.required_action.submit_tool_outputs.tool_calls.map(async (toolCall: any) => {
+          return {
+            tool_call_id: toolCall.id,
+            output: await this.handleToolCall(toolCall),
+          };
+        }));
+        
+        callbacks.onProgressText?.('Submiting tool outputs...');
+
+        const threadId = data.thread_id;
+
+        const result = await this.submitToolOutputs(runId, threadId, toolOutputs);
+
+        console.log('tool outputs submitted', result);
+
         break;
       case 'thread.run.created':
         callbacks.onProgressText?.('Run created...');
