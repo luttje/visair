@@ -59,7 +59,7 @@ export class AssistantClient {
   /**
    * Create a new assistant, returning the ID
    */
-  async createAssistant(config: AssistantConfig) {
+  async createAssistant(config: Omit<AssistantConfig, 'id'>) {
     await this.checkLimit();
 
     const data = {
@@ -96,6 +96,21 @@ export class AssistantClient {
     const threadData = await response.json();
 
     return threadData.id as string;
+  }
+
+  /**
+   * Delete a thread
+   */
+  async deleteThread(threadId: string) {
+    await this.checkLimit();
+
+    const response = await this.fetch(`/threads/${threadId}`, {
+      method: 'DELETE'
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to delete thread: ${response.statusText}`);
+    }
   }
 
   /**

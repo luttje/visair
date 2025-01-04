@@ -1,8 +1,6 @@
 <script lang="ts">
 	import { apiKey } from '$lib/assistants/ApiKeyStore';
 	import { apiLimit, apiLimitCount } from '$lib/assistants/ApiLimitStore';
-	import { threadStore } from '$lib/assistants/ThreadStore.svelte';
-	import Button from '$lib/components/Button.svelte';
 	import Container from '$lib/components/Container.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import Entry from '$lib/components/Entry.svelte';
@@ -11,12 +9,6 @@
 	let chooseApiLimit: number = $state(10);
 
 	$effect(() => apiLimit.set(chooseApiLimit));
-
-  const clearThreads = () => {
-    if (confirm('Are you sure you want to remove all threads? This cannot be undone.')) {
-      threadStore.set(new Map());
-    }
-  };
 </script>
 
 <main class="flex flex-col gap-4 p-8">
@@ -29,12 +21,6 @@
     </div>
 
 		<GroupReasoningContainer />
-    
-    {#if $threadStore.size > 0}
-    <div class="flex flex-row gap-4 items-center bg-slate-800 p-4 rounded-lg">
-      <Button onclick={clearThreads}>Remove All Threads</Button>
-    </div>
-    {/if}
 	{:else}
 		<Container>
 			<EmptyState>

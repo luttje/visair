@@ -10,6 +10,8 @@
 	import { projectLeadAssistant } from '$lib/assistants/configs/projectLeadAssistant';
 	import Button from './Button.svelte';
 	import Container from './Container.svelte';
+	import { browser } from '$app/environment';
+	import type { AssistantConfig } from '$lib/assistants/AssistantConfig';
 
 	type Props = {};
 
@@ -21,13 +23,47 @@
     if (!client) 
       return;
 
+    if (browser) {
+      const cachedProjectLead = localStorage.getItem('projectLeadAssistant');
+      
+      if (cachedProjectLead) {
+        const projectLeadAssistant = JSON.parse(cachedProjectLead);
+        const threadId = await client.createThread();
+
+        addThreadToStore({
+          id: threadId,
+          assistantId: projectLeadAssistant.id,
+          config: projectLeadAssistant,
+          messages: [
+            {
+              id: '',
+              content: 'Hello, how can I help you today?',
+              timestamp: new Date().toISOString(),
+              sender: projectLeadAssistant.id,
+            },
+          ]
+        });
+
+        return;
+      }
+    }
+
     const assistantId = await client.createAssistant(projectLeadAssistant);
+    const assistant: AssistantConfig = {
+        ...projectLeadAssistant,
+        id: assistantId,
+      };
+
+    if (browser) {
+      localStorage.setItem('projectLeadAssistant', JSON.stringify(assistant));
+    }
+
     const threadId = await client.createThread();
 
     addThreadToStore({
       id: threadId,
       assistantId,
-      config: projectLeadAssistant,
+      config: assistant,
       messages: [
         {
           id: '',
@@ -37,6 +73,21 @@
         },
       ]
     });
+  };
+
+  const clearThreads = async () => {
+    if (!client) 
+      return;
+
+    if (confirm('Are you sure you want to remove all threads? This cannot be undone.')) {
+      const threads = $threadStore;
+
+      for (const [threadId, thread] of threads) {
+        await client.deleteThread(threadId);
+      }
+
+      threadStore.set(new Map());
+    }
   };
 </script>
 
@@ -54,6 +105,10 @@
 			<ReasoningContainer {thread} {client} />
 		{/each}
 	</Container>
+    
+  <div class="flex flex-row gap-4 items-center bg-slate-800 p-4 rounded-lg">
+    <Button onclick={clearThreads}>Remove All Threads</Button>
+  </div>
 {:else}
 	<Container
 		{...attrs}

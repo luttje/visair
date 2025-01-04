@@ -1,7 +1,6 @@
 import type { AssistantConfig } from "../AssistantConfig";
 
-export const projectLeadAssistant: AssistantConfig = {
-  id: 'projectLeadAssistant',
+export const projectLeadAssistant: Omit<AssistantConfig, 'id'> = {
   name: 'Project Lead AI',
   description: 'Helps you by assembling a team and working on a project together.',
   instructions: 
