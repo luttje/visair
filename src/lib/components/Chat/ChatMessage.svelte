@@ -23,15 +23,15 @@
 </script>
 
 <div class={`flex gap-3 max-w-2xl ${isOwn ? 'ml-auto flex-row-reverse' : ''}`} {...attrs}>
-  {#if false}
   <div class="w-8 h-8 rounded-full {sender.color} flex-shrink-0 flex items-center justify-center overflow-hidden">
     {#if sender.avatar}
-      <img src={sender.avatar} alt={sender.name} class="w-full h-full object-cover" />
+      <div class="mb-1">
+        {sender.avatar}
+      </div>
     {:else}
       <span class="text-gray-600 text-sm">{sender.name[0].toUpperCase()}</span>
     {/if}
   </div>
-  {/if}
 
   <Conditional when={isPrivate} element={PrivateShield}>
     <div class={`flex flex-col ${isOwn ? 'items-end' : ''}`}>

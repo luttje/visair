@@ -3,13 +3,14 @@ import { apiLimit, apiLimitCount, incrementApiLimitCount } from "./ApiLimitStore
 import { get } from "svelte/store";
 import type { ToolResult } from "./Tools";
 import { createPersonaFunctionName, sendInstructionsFunctionName } from "./configs/projectLeadAssistant";
+import { addThreadToStore, threadStore } from "./ThreadStore.svelte";
 
 export type StreamCallbacks = {
-  onProgressText?: (progressText: string) => void;
-  onMessageCreated?: (assistantId: string, messageId: string) => void;
-  onMessageDelta?: (messageId: string, delta: string) => void;
-  onError?: (error: Error) => void;
-  onComplete?: () => void;
+  onProgressText?: (threadId: string, progressText: string) => void;
+  onMessageCreated?: (threadId: string, assistantId: string, messageId: string) => void;
+  onMessageDelta?: (threadId: string, messageId: string, delta: string) => void;
+  onError?: (threadId: string, error: Error) => void;
+  onComplete?: (threadId: string) => void;
 };
 
 export class RateLimitError extends Error {
@@ -26,8 +27,14 @@ export class AssistantClient {
   private apiKey: string;
   private baseURL: string = 'https://api.openai.com/v1';
 
+  private callbacks: StreamCallbacks = {};
+
   constructor(apiKey: string) {
     this.apiKey = apiKey;
+  }
+
+  public setCallbacks(callbacks: StreamCallbacks) {
+    this.callbacks = callbacks;
   }
 
   private async checkLimit() {
@@ -131,11 +138,11 @@ export class AssistantClient {
   /**
    * Add a message to a thread, returning the message ID
    */
-  async addUserMessage(threadId: string, content: string) {
+  async addMessage(threadId: string, role: 'user' | 'assistant', content: string) {
     await this.checkLimit();
 
     const data = {
-      role: 'user',
+      role,
       content
     };
 
@@ -167,7 +174,7 @@ export class AssistantClient {
    * Streams a run, calling the provided callbacks.
    * Be sure to have added messages to the thread before calling this.
    */
-  async streamRun(threadId: string, assistantId: string, callbacks: StreamCallbacks) {
+  async streamRun(threadId: string, assistantId: string) {
     await this.checkLimit();
 
     const data = {
@@ -180,6 +187,10 @@ export class AssistantClient {
       body: JSON.stringify(data)
     });
 
+    return await this.processStreamResponse(threadId, response);
+  }
+
+  async processStreamResponse(threadId: string, response: Response, runId?: string) {
     const reader = response.body?.getReader();
 
     if (!reader) {
@@ -187,8 +198,8 @@ export class AssistantClient {
     }
 
     // Create a new TextDecoder to handle the stream
-    let runId: string | undefined = undefined;
     const decoder = new TextDecoder();
+    let fullText = '';
     let buffer = '';
 
     let event: string | undefined = undefined;
@@ -228,7 +239,11 @@ export class AssistantClient {
               if (!runId) {
                 console.warn(`Ignoring Event. No runId yet for event: ${event}`);
               } else {
-                this.handleEvent(runId, event, data, callbacks);
+                const delta = await this.handleEvent(threadId, runId, event, data);
+
+                if (typeof delta === 'string') {
+                  fullText += delta;
+                }
               }
               event = undefined;
             } else {
@@ -240,10 +255,11 @@ export class AssistantClient {
         }
       }
     }
+
+    return fullText;
   }
 
-  private async handleToolCall(toolCall: any): Promise<string>
-  {
+  private async handleToolCall(toolCall: any): Promise<string> {
     if (toolCall.type !== 'function') {
       console.warn('Unexpected tool call type:', toolCall.type);
       return 'unknown';
@@ -253,31 +269,25 @@ export class AssistantClient {
     const parameters = JSON.parse(toolCall.function.arguments);
 
     if (name === createPersonaFunctionName) {
-      const { personaId, name, expertise, instructions } = parameters;
+      const { personaId, name, emoji, expertise, instructions } = parameters;
 
-      console.log('Creating persona', personaId, name, expertise, instructions);
-
-      // TODO: await until persona is created and has done the task
-      return `Created persona ${name} with expertise ${expertise}. They will get back to you ASAP!`;
+      return await this.handleCreatePersona(personaId, name, emoji, expertise, instructions);
     } else if (name === sendInstructionsFunctionName) {
-      const { personaId, name, expertise, instructions, emoji } = parameters;
+      const { personaId, instructions } = parameters;
 
-      console.log('Sending instructions to persona', personaId, name, expertise, instructions, emoji);
-
-      // TODO: await until persona has done the task
-      return `Sent instructions to persona ${personaId}. They will get back to you ASAP!`;
+      return await this.handleSendInstructions(personaId, instructions);
     } else {
-      console.warn('Unhandled tool call:', toolCall);
-      return 'unknown';
+      console.error('Unhandled tool call:', toolCall);
+      throw new Error(`Unhandled tool call: ${name}`);
     }
   }
 
-  private async submitToolOutputs(runId: string, threadId: string, toolOutputs: ToolResult[])
-  {
+  private async submitToolOutputs(runId: string, threadId: string, toolOutputs: ToolResult[]) {
     await this.checkLimit();
 
     const data = {
-      tool_outputs: toolOutputs
+      tool_outputs: toolOutputs,
+      stream: true,
     };
 
     const response = await this.fetch(`/threads/${threadId}/runs/${runId}/submit_tool_outputs`, {
@@ -285,15 +295,106 @@ export class AssistantClient {
       body: JSON.stringify(data)
     });
 
-    const result = await response.json();
-
-    return result;
+    return await this.processStreamResponse(threadId, response, runId);
   }
 
-  private async handleEvent(runId: string, eventType: string, data: any, callbacks: StreamCallbacks) {
+  private async handleCreatePersona(personaId: string, name: string, emoji: string, expertise: string, instructions: string): Promise<string> {
+    console.log('Creating persona', personaId, name, emoji, expertise, instructions);
+
+    const assistantConfig = {
+      personaId: personaId,
+      name: name,
+      avatar: emoji,
+      description: expertise,
+      instructions: instructions,
+    };
+    const assistantId = await this.createAssistant(assistantConfig);
+    
+    const assistant = {
+      ...assistantConfig,
+      id: assistantId,
+    };
+
+    console.log('Created persona', personaId, assistantId);
+
+    // Create a thread for the persona
+    const threadId = await this.createThread();
+
+    addThreadToStore({
+			id: threadId,
+			assistantId,
+			config: assistant,
+      messages: [],
+    });
+    
+    // Add the instructions to the thread
+    const role = 'user'; // the user is the project lead asking the persona to do something
+    const messageId = await this.addMessage(threadId, role, instructions);
+
+    threadStore.update((store) => {
+      const thread = store.get(threadId);
+
+      if (!thread) {
+        throw new Error(`Thread not found: ${threadId}`);
+      }
+
+      thread.messages.push({
+        id: messageId,
+        content: instructions,
+        sender: role,
+        timestamp: new Date().toISOString()
+      });
+
+      return store;
+    });
+
+    // Stream the run
+    const textResult = await this.streamRun(threadId, assistantId);
+
+    return textResult;
+  }
+
+  private async handleSendInstructions(personaId: string, instructions: string) {
+    console.log('Sending instructions to persona', personaId, instructions);
+
+    const threads = get(threadStore);
+    const thread = threads.entries().find(([threadId, thread]) => thread.config.personaId === personaId);
+
+    if (!thread) {
+      console.error('Thread not found for personaId:', personaId, threads);
+      throw new Error('Thread not found');
+    }
+
+    const threadId = thread[0];
+    const messageId = await this.addMessage(threadId, 'user', instructions);
+
+    threadStore.update((store) => {
+      const thread = store.get(threadId);
+
+      if (!thread) {
+        throw new Error(`Thread not found: ${threadId}`);
+      }
+
+      thread.messages.push({
+        id: messageId,
+        content: instructions,
+        sender: 'user',
+        timestamp: new Date().toISOString()
+      });
+
+      return store;
+    });
+
+    // Stream the run
+    const textResult = await this.streamRun(threadId, thread[1].assistantId);
+
+    return textResult;
+  }
+
+  private async handleEvent(threadId: string, runId: string, eventType: string, data: any) {
     switch (eventType) {
       case 'thread.run.requires_action':
-        callbacks.onProgressText?.('Using tools...');
+        this.callbacks.onProgressText?.(threadId, 'Using tools...');
 
         console.log(data);
 
@@ -303,58 +404,60 @@ export class AssistantClient {
             output: await this.handleToolCall(toolCall),
           };
         }));
-        
-        callbacks.onProgressText?.('Submiting tool outputs...');
 
-        const threadId = data.thread_id;
+        this.callbacks.onProgressText?.(threadId, 'Submiting tool outputs...');
 
         const result = await this.submitToolOutputs(runId, threadId, toolOutputs);
 
-        console.log('tool outputs submitted', result);
+        console.log('tool outputs submitted completely', result);
 
         break;
       case 'thread.run.created':
-        callbacks.onProgressText?.('Run created...');
+        this.callbacks.onProgressText?.(threadId, 'Run created...');
         break;
       case 'thread.run.queued':
-        callbacks.onProgressText?.('Run queued...');
+        this.callbacks.onProgressText?.(threadId, 'Run queued...');
         break;
       case 'thread.run.in_progress':
-        callbacks.onProgressText?.('Run in progress...');
+        this.callbacks.onProgressText?.(threadId, 'Run in progress...');
         break;
       case 'thread.run.step.created':
-        callbacks.onProgressText?.('Step created...');
+        this.callbacks.onProgressText?.(threadId, 'Step created...');
         break;
       case 'thread.run.step.in_progress':
-        callbacks.onProgressText?.('Step in progress...');
+        this.callbacks.onProgressText?.(threadId, 'Step in progress...');
         break;
       case 'thread.run.step.delta':
-        callbacks.onProgressText?.('Step delta...');
+        this.callbacks.onProgressText?.(threadId, 'Step delta...');
         break;
       case 'thread.message.created':
-        callbacks.onMessageCreated?.(data.assistant_id, data.id);
+        this.callbacks.onMessageCreated?.(threadId, data.assistant_id, data.id);
         break;
       case 'thread.message.in_progress':
-        callbacks.onProgressText?.('Typing...');
+        this.callbacks.onProgressText?.(threadId, 'Typing...');
         break;
       case 'thread.message.delta':
-        callbacks.onProgressText?.('Typing...');
+        this.callbacks.onProgressText?.(threadId, 'Typing...');
 
         if (data.delta.content.length != 1)
           console.warn('Unexpected content length (expecting 1):', data.delta.content.length, data);
         else if (data.delta.content[0].type != 'text')
-            console.warn('Unexpected content type (expecting text):', data.delta.content[0].type, data);
-        else
-          callbacks.onMessageDelta?.(data.id, data.delta.content[0].text.value);
+          console.warn('Unexpected content type (expecting text):', data.delta.content[0].type, data);
+        else {
+          const delta = data.delta.content[0].text.value;
+          this.callbacks.onMessageDelta?.(threadId, data.id, delta);
+
+          return delta as string;
+        }
 
         break;
       case 'thread.message.completed':
       case 'thread.run.step.completed':
-        callbacks.onProgressText?.('');
+        this.callbacks.onProgressText?.(threadId, '');
         break;
       case 'thread.run.completed':
-        callbacks.onProgressText?.('');
-        callbacks.onComplete?.();
+        this.callbacks.onProgressText?.(threadId, '');
+        this.callbacks.onComplete?.(threadId);
         break;
       default:
         console.log('Unhandled event', eventType);

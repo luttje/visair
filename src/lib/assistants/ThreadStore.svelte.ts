@@ -46,8 +46,7 @@ export const getSender = (senderId: 'user' | string): Member => {
   if (senderId === 'user') {
     return {
       id: 'user',
-      name: 'User (you)',
-      avatar: 'https://i.pravatar.cc/300',
+      name: 'Requester',
       status: 'online',
       isTyping: false,
     };

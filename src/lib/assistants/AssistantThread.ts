@@ -6,4 +6,5 @@ export interface AssistantThread {
   assistantId: string;
   config: AssistantConfig;
   messages: AssistantMessage[];
+  progressText?: string;
 }

@@ -35,12 +35,91 @@
 			cachedProjectLead = JSON.parse(cachedData) as AssistantConfig;
 			customInstructions = cachedProjectLead.instructions;
 		}
+  });
+
+  $effect(() => {
+    if (!client) return;
+
+    client.setCallbacks({
+				onProgressText(threadId: string, progressText) {
+          const thread = $threadStore.get(threadId);
+
+          if (!thread) {
+            console.error('onProgressText | Thread not found:', threadId, $threadStore);
+            return;
+          }
+          
+					threadStore.update((store) => {
+					  thread.progressText = progressText;
+            return store;
+          });
+				},
+				onComplete(threadId: string) {
+					console.log('onComplete | Run completed', threadId);
+				},
+				onError(threadId: string, error) {
+					console.error('onError | Error running assistant:', threadId, error);
+				},
+				onMessageCreated(threadId: string, assistantId: string, messageId: string) {
+          const thread = $threadStore.get(threadId);
+
+          if (!thread) {
+            console.error('onMessageCreated | Thread not found:', threadId, $threadStore);
+            return;
+          }
+          
+					const message = thread.messages.findLast((m) => m.id === messageId);
+
+					if (message) {
+						console.warn('onMessageCreated | Message already exists:', messageId, thread.messages);
+						return;
+					}
+
+					threadStore.update((store) => {
+						thread.messages.push({
+							id: messageId,
+							content: '',
+							sender: assistantId,
+							timestamp: new Date().toISOString()
+						});
+
+						return store;
+					});
+				},
+				onMessageDelta(threadId: string, messageId: string, delta: string) {
+          const thread = $threadStore.get(threadId);
+
+          if (!thread) {
+            console.error('onMessageDelta | Thread not found:', threadId, $threadStore);
+            return;
+          }
+
+					threadStore.update((store) => {
+						// Slice the message and re-add it so that Svelte can detect the change
+						const messageIndex = thread.messages.findIndex((m) => m.id === messageId);
+						const message = thread.messages[messageIndex];
+
+						if (message) {
+							message.content = message.content + delta;
+						} else {
+							console.error(
+								'onMessageDelta | Message not found:',
+								messageId,
+								thread.messages,
+								thread.messages.map((m) => m.id)
+							);
+						}
+
+						return store;
+					});
+				},
+			});
 	});
 
 	const start = async () => {
 		if (!client) return;
 
-    // Force clean if custom instructions are enabled, so that the new assistant can be created
+		// Force clean if custom instructions are enabled, so that the new assistant can be created
 		if (enableCustomInstructions && cachedProjectLead) {
 			forceClearCachedProjectLead(client);
 		}
@@ -55,7 +134,7 @@
 				messages: [
 					{
 						id: '',
-						content: 'Hello, how can I help you today?',
+						content: 'Hello, how can we help you today?',
 						timestamp: new Date().toISOString(),
 						sender: cachedProjectLead.id
 					}
@@ -93,7 +172,7 @@
 			messages: [
 				{
 					id: '',
-					content: 'Hello, how can I help you today?',
+					content: 'Hello, how can we help you today?',
 					timestamp: new Date().toISOString(),
 					sender: assistantId
 				}
@@ -104,11 +183,13 @@
 	const forceClearThreads = async (client: AssistantClient) => {
 		const threads = $threadStore;
 
-		for (const [threadId, thread] of threads) {
-			await client.deleteThread(threadId);
+		try {
+			for (const [threadId, thread] of threads) {
+				await client.deleteThread(threadId);
+			}
+		} finally {
+			threadStore.set(new Map());
 		}
-
-		threadStore.set(new Map());
 	};
 
 	const clearThreads = async () => {
@@ -146,8 +227,11 @@
 
 {#if $threadStore.size > 0 && client}
 	<Container class={['flex', 'flex-row', 'flex-wrap', 'gap-4'].join(' ')} {...attrs}>
-		{#each $threadStore as [threadId, thread] (threadId)}
-			<ReasoningContainer {thread} {client} />
+		{#each $threadStore as [threadId, thread], index (threadId)}
+			<ReasoningContainer 
+      {thread} 
+      {client} 
+      withChat={index === 0} />
 		{/each}
 	</Container>
 {:else}
@@ -170,12 +254,16 @@
 			<div slot="text">No collaboration started</div>
 
 			<div slot="actions" class="flex w-full max-w-[500px] flex-col gap-4">
-				<Checkbox bind:checked={enableCustomInstructions} label="Enable Custom Project Lead System Prompt" />
+				<Checkbox
+					bind:checked={enableCustomInstructions}
+					label="Enable Custom Project Lead System Prompt"
+				/>
 				{#if enableCustomInstructions}
-					<div class="w-full flex flex-col gap-2">
-            <p>
-              By customizing the System Prompt for the Project Lead Assistant, you can provide specific instructions for the assistant to follow.
-            </p>
+					<div class="flex w-full flex-col gap-2">
+						<p>
+							By customizing the System Prompt for the Project Lead Assistant, you can provide
+							specific instructions for the assistant to follow.
+						</p>
 						<TextAreaEntry label="Custom Instructions" bind:value={customInstructions} rows={10} />
 					</div>
 				{/if}

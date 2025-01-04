@@ -14,16 +14,17 @@
 	type Props = {
 		thread: AssistantThread;
 		client: AssistantClient;
+    withChat?: boolean;
 	};
 
-	let { thread, client, ...attrs }: Props = $props();
+	let { thread, client, withChat = false, ...attrs }: Props = $props();
 
 	let userInput = $state('');
 	let isLoading = $state(false);
 	let showSystemPrompt = $state(false);
 	let messages = $state(thread.messages);
 	let scrollContainer: HTMLDivElement;
-	let currentProgressText = $state('');
+	let progressText = $state('');
 
 	// Watch the threadStore for changes and update the messages
 	$effect(() => {
@@ -31,6 +32,7 @@
 
 		if (updatedThread) {
 			messages = thread.messages;
+      progressText = updatedThread.progressText || '';
 
 			// We have to wait a frame for the scroll to be updated
 			setTimeout(() => {
@@ -66,7 +68,7 @@
 		isLoading = true;
 
 		try {
-			const messageId = await client.addUserMessage(thread.id, userInput);
+			const messageId = await client.addMessage(thread.id, 'user', userInput);
 
 			threadStore.update((store) => {
 				thread.messages.push({
@@ -79,57 +81,7 @@
 				return store;
 			});
 
-			await client.streamRun(thread.id, thread.assistantId, {
-				onProgressText(progressText) {
-					currentProgressText = progressText;
-          scrollToBottom();
-				},
-				onComplete() {
-					console.log('client.streamRun | Run completed');
-				},
-				onError(error) {
-					console.error('client.streamRun | Error running assistant:', error);
-				},
-				onMessageCreated(assistantId: string, messageId: string) {
-					const message = thread.messages.findLast((m) => m.id === messageId);
-
-					if (message) {
-						console.warn('client.streamRun | Message already exists:', messageId, thread.messages);
-						return;
-					}
-
-					threadStore.update((store) => {
-						thread.messages.push({
-							id: messageId,
-							content: '',
-							sender: assistantId,
-							timestamp: new Date().toISOString()
-						});
-
-						return store;
-					});
-				},
-				onMessageDelta(messageId: string, delta: string) {
-					threadStore.update((store) => {
-						// Slice the message and re-add it so that Svelte can detect the change
-						const messageIndex = thread.messages.findIndex((m) => m.id === messageId);
-						const message = thread.messages[messageIndex];
-
-						if (message) {
-							message.content = message.content + delta;
-						} else {
-							console.error(
-								'client.streamRun | Message not found:',
-								messageId,
-								thread.messages,
-								thread.messages.map((m) => m.id)
-							);
-						}
-
-						return store;
-					});
-				},
-			});
+			await client.streamRun(thread.id, thread.assistantId);
 
 			userInput = '';
 		} catch (error) {
@@ -149,7 +101,7 @@
 	class="flex h-[500px] w-96 flex-col overflow-hidden rounded-lg border border-slate-700 bg-slate-800"
 	{...attrs}
 >
-	<GroupTitle title={thread.config.name} description={thread.config.description}>
+	<GroupTitle title={`${thread.config.avatar || ''} ${thread.config.name}`} description={thread.config.description}>
 		<div slot="actions">
 			<button
 				aria-label="Show system prompt"
@@ -196,9 +148,9 @@
 			</button>
 		</div>
 	</GroupTitle>
-  {#if currentProgressText}
+  {#if progressText}
     <div class="px-4 py-2">
-      <ProgressText>{currentProgressText}</ProgressText>
+      <ProgressText>{progressText}</ProgressText>
     </div>
   {/if}
 
@@ -218,6 +170,7 @@
 		{/if}
 	</div>
 
+  {#if withChat}
 	<div>
 		<div class="border-t border-slate-700 bg-slate-900 p-4">
 			<div class="flex gap-2">
@@ -246,4 +199,5 @@
 			</div>
 		</div>
 	</div>
+  {/if}
 </div>

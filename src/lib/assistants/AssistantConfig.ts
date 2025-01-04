@@ -6,4 +6,5 @@ export type AssistantConfig = Member & {
   description?: string;
   instructions: string;
   tools?: ToolsConfig[];
+  personaId?: string;
 };
