@@ -42,15 +42,15 @@
   });
 </script>
 
-<header>
+<header class="container mx-auto max-w-7xl">
 	<div class="flex items-center justify-between p-8">
 		<div class="flex flex-row items-center gap-2">
-      <img src={glass_orb} alt="VisAIR" class="size-16" />
+      <img src={glass_orb} alt="VisAIR" class="size-12 md:size-16" />
 			<Heading level={1}>VisAIR</Heading>
 		</div>
     <div class="flex flex-row items-center gap-4">
 			{#if user}
-				<div class="flex flex-row items-center gap-4">
+				<div class="hidden md:flex flex-row items-center gap-4">
 					{#if showApiKey}
             <Entry value={user.apiKey} />
 					{/if}

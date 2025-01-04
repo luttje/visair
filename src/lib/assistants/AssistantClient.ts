@@ -80,6 +80,21 @@ export class AssistantClient {
   }
 
   /**
+   * Delete an assistant
+   */
+  async deleteAssistant(assistantId: string) {
+    await this.checkLimit();
+
+    const response = await this.fetch(`/assistants/${assistantId}`, {
+      method: 'DELETE'
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to delete assistantId: ${response.statusText}`);
+    }
+  }
+
+  /**
    * Create a new thread, returning the ID
    */
   async createThread() {

@@ -16,6 +16,10 @@ export function getRandomColor() {
     'bg-violet-300',
     'bg-purple-300',
   ];
- 
+
   return colors[Math.floor(Math.random() * colors.length)];
+}
+
+export function getUniqueElementId(): string {
+  return (Math.random() * 10e15).toString(16);
 }

@@ -15,7 +15,7 @@
 	type="button"
 	class={[
     'rounded-md', 'px-4', 'py-2', 'text-white', 'font-semibold', 'text-center',
-    (isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'),
+    (isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer transition-transform hover:scale-105'),
   ].join(' ')}
 	class:bg-emerald-600={primary}
 	class:bg-slate-700={!primary}

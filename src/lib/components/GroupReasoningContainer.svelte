@@ -12,107 +12,146 @@
 	import Container from './Container.svelte';
 	import { browser } from '$app/environment';
 	import type { AssistantConfig } from '$lib/assistants/AssistantConfig';
+	import Label from './Label.svelte';
+	import { onMount } from 'svelte';
+	import TextAreaEntry from './TextAreaEntry.svelte';
+	import Checkbox from './Checkbox.svelte';
 
 	type Props = {};
 
 	let { ...attrs }: Props = $props();
 
 	const client = $apiKey ? new AssistantClient($apiKey) : null;
+	let cachedProjectLead: AssistantConfig | null = $state(null);
+	let enableCustomInstructions: boolean = $state(false);
+	let customInstructions: string = $state(projectLeadAssistant.instructions);
 
-  const start = async () => {
-    if (!client) 
-      return;
+	onMount(() => {
+		if (browser) {
+			const cachedData = localStorage.getItem('projectLeadAssistant');
 
-    if (browser) {
-      const cachedProjectLead = localStorage.getItem('projectLeadAssistant');
-      
-      if (cachedProjectLead) {
-        const projectLeadAssistant = JSON.parse(cachedProjectLead);
-        const threadId = await client.createThread();
+			if (!cachedData) return;
 
-        addThreadToStore({
-          id: threadId,
-          assistantId: projectLeadAssistant.id,
-          config: projectLeadAssistant,
-          messages: [
-            {
-              id: '',
-              content: 'Hello, how can I help you today?',
-              timestamp: new Date().toISOString(),
-              sender: projectLeadAssistant.id,
-            },
-          ]
-        });
+			cachedProjectLead = JSON.parse(cachedData) as AssistantConfig;
+			customInstructions = cachedProjectLead.instructions;
+		}
+	});
 
-        return;
-      }
-    }
+	const start = async () => {
+		if (!client) return;
 
-    const assistantId = await client.createAssistant(projectLeadAssistant);
-    const assistant: AssistantConfig = {
-        ...projectLeadAssistant,
-        id: assistantId,
-      };
+    // Force clean if custom instructions are enabled, so that the new assistant can be created
+		if (enableCustomInstructions && cachedProjectLead) {
+			forceClearCachedProjectLead(client);
+		}
 
-    if (browser) {
-      localStorage.setItem('projectLeadAssistant', JSON.stringify(assistant));
-    }
+		if (browser && cachedProjectLead) {
+			const threadId = await client.createThread();
 
-    const threadId = await client.createThread();
+			addThreadToStore({
+				id: threadId,
+				assistantId: cachedProjectLead.id,
+				config: cachedProjectLead,
+				messages: [
+					{
+						id: '',
+						content: 'Hello, how can I help you today?',
+						timestamp: new Date().toISOString(),
+						sender: cachedProjectLead.id
+					}
+				]
+			});
 
-    addThreadToStore({
-      id: threadId,
-      assistantId,
-      config: assistant,
-      messages: [
-        {
-          id: '',
-          content: 'Hello, how can I help you today?',
-          timestamp: new Date().toISOString(),
-          sender: assistantId,
-        },
-      ]
-    });
-  };
+			return;
+		}
 
-  const clearThreads = async () => {
-    if (!client) 
-      return;
+		const assistantConfig = {
+			...projectLeadAssistant
+		};
 
-    if (confirm('Are you sure you want to remove all threads? This cannot be undone.')) {
-      const threads = $threadStore;
+		if (enableCustomInstructions) {
+			assistantConfig.instructions = customInstructions;
+		}
 
-      for (const [threadId, thread] of threads) {
-        await client.deleteThread(threadId);
-      }
+		const assistantId = await client.createAssistant(assistantConfig);
+		const assistant: AssistantConfig = {
+			...assistantConfig,
+			id: assistantId
+		};
 
-      threadStore.set(new Map());
-    }
-  };
+		if (browser) {
+			localStorage.setItem('projectLeadAssistant', JSON.stringify(assistant));
+			cachedProjectLead = assistant;
+		}
+
+		const threadId = await client.createThread();
+
+		addThreadToStore({
+			id: threadId,
+			assistantId,
+			config: assistant,
+			messages: [
+				{
+					id: '',
+					content: 'Hello, how can I help you today?',
+					timestamp: new Date().toISOString(),
+					sender: assistantId
+				}
+			]
+		});
+	};
+
+	const forceClearThreads = async (client: AssistantClient) => {
+		const threads = $threadStore;
+
+		for (const [threadId, thread] of threads) {
+			await client.deleteThread(threadId);
+		}
+
+		threadStore.set(new Map());
+	};
+
+	const clearThreads = async () => {
+		if (!client) return;
+
+		if (confirm('Are you sure you want to remove all threads? This cannot be undone.')) {
+			forceClearThreads(client);
+		}
+	};
+
+	const forceClearCachedProjectLead = async (client: AssistantClient) => {
+		if (browser) localStorage.removeItem('projectLeadAssistant');
+
+		if (!cachedProjectLead) return;
+
+		const assistantRemoving = cachedProjectLead;
+		cachedProjectLead = null;
+
+		await forceClearThreads(client);
+		await client.deleteAssistant(assistantRemoving.id);
+	};
+
+	const clearCachedProjectLead = async () => {
+		if (!client || !cachedProjectLead) return;
+
+		if (
+			confirm(
+				'Are you sure you want to remove the cached project lead assistant? This will also remove all threads and cannot be undone.'
+			)
+		) {
+			await forceClearCachedProjectLead(client);
+		}
+	};
 </script>
 
 {#if $threadStore.size > 0 && client}
-	<Container
-		class={[
-			'flex',
-			'flex-row',
-			'flex-wrap',
-			'gap-4',
-		].join(' ')}
-		{...attrs}
-	>
+	<Container class={['flex', 'flex-row', 'flex-wrap', 'gap-4'].join(' ')} {...attrs}>
 		{#each $threadStore as [threadId, thread] (threadId)}
 			<ReasoningContainer {thread} {client} />
 		{/each}
 	</Container>
-    
-  <div class="flex flex-row gap-4 items-center bg-slate-800 p-4 rounded-lg">
-    <Button onclick={clearThreads}>Remove All Threads</Button>
-  </div>
 {:else}
-	<Container
-		{...attrs}
-	>
+	<Container {...attrs}>
 		<EmptyState>
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
@@ -130,9 +169,31 @@
 
 			<div slot="text">No collaboration started</div>
 
-      <div slot="actions">
-        <Button onclick={start} primary>Start</Button>
-      </div>
+			<div slot="actions" class="flex w-full max-w-[500px] flex-col gap-4">
+				<Checkbox bind:checked={enableCustomInstructions} label="Enable Custom Project Lead System Prompt" />
+				{#if enableCustomInstructions}
+					<div class="w-full flex flex-col gap-2">
+            <p>
+              By customizing the System Prompt for the Project Lead Assistant, you can provide specific instructions for the assistant to follow.
+            </p>
+						<TextAreaEntry label="Custom Instructions" bind:value={customInstructions} rows={10} />
+					</div>
+				{/if}
+
+				<Button onclick={start} primary>Start</Button>
+			</div>
 		</EmptyState>
 	</Container>
 {/if}
+
+<div class="flex flex-row items-center gap-4 rounded-lg bg-slate-800 p-4">
+	<Label>Actions</Label>
+	{#if client}
+		{#if $threadStore.size > 0}
+			<Button onclick={clearThreads}>Remove All Threads</Button>
+		{/if}
+		{#if cachedProjectLead}
+			<Button onclick={clearCachedProjectLead}>Clear Cached Project Leader Assistant</Button>
+		{/if}
+	{/if}
+</div>

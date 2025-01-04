@@ -1,4 +1,4 @@
-<div class="flex flex-col gap-8 text-center items-center text-slate-500">
+<div class="flex flex-1 flex-col gap-8 items-center text-slate-500">
   <div class="size-40">
     <slot></slot>
   </div>

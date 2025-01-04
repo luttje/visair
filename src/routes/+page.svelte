@@ -6,12 +6,12 @@
 	import Entry from '$lib/components/Entry.svelte';
 	import GroupReasoningContainer from '$lib/components/GroupReasoningContainer.svelte';
 
-	let chooseApiLimit: number = $state(10);
+	let chooseApiLimit: number = $state(100);
 
 	$effect(() => apiLimit.set(chooseApiLimit));
 </script>
 
-<main class="flex flex-col gap-4 p-8">
+<main class="flex flex-col gap-4 p-8 container mx-auto max-w-7xl">
 	{#if $apiKey}
     <div class="flex flex-row gap-4 items-center bg-slate-800 p-4 rounded-lg">
       <Entry label="API Limit" type="number" bind:value={chooseApiLimit} />

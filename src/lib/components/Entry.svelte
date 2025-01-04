@@ -1,5 +1,7 @@
 <script lang="ts">
 	import type { HTMLInputAttributes } from "svelte/elements";
+	import Label from "./Label.svelte";
+	import { getUniqueElementId } from "$lib/Utilities";
 
 	type Props = {
 		value?: any;
@@ -17,12 +19,15 @@
 	}: Props = $props();
   const isRequired = $derived(attrs.required);
   const isDisabled = $derived(attrs.disabled);
+  
+  const id = $derived(attrs.id);
+  const uniqueId = getUniqueElementId();
 </script>
 
 <div class="relative flex-1">
 	{#if label}
-		<label
-			for="input"
+    <Label
+			for={id || uniqueId}
 			class={[
         'block', 'text-sm', 'font-medium', 'mb-1', error && 'text-red-500',
         (isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'),
@@ -32,13 +37,13 @@
 			{#if isRequired}
 				<span class="text-red-500">*</span>
 			{/if}
-		</label>
+      </Label>
 	{/if}
 
 	<input
     {...attrs}
 		bind:value={value}
-		id="input"
+    id={id || uniqueId}
 		class={[
 			'w-full',
 			'rounded-md',

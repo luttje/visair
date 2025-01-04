@@ -9,6 +9,7 @@
 	import { threadStore, getSender } from '$lib/assistants/ThreadStore.svelte';
 	import { onMount } from 'svelte';
 	import ProgressText from './ProgressText.svelte';
+	import Heading from './Heading.svelte';
 
 	type Props = {
 		thread: AssistantThread;
@@ -19,6 +20,7 @@
 
 	let userInput = $state('');
 	let isLoading = $state(false);
+	let showSystemPrompt = $state(false);
 	let messages = $state(thread.messages);
 	let scrollContainer: HTMLDivElement;
 	let currentProgressText = $state('');
@@ -88,12 +90,12 @@
 					console.error('client.streamRun | Error running assistant:', error);
 				},
 				onMessageCreated(assistantId: string, messageId: string) {
-          const message = thread.messages.findLast((m) => m.id === messageId);
+					const message = thread.messages.findLast((m) => m.id === messageId);
 
-          if (message) {
-            console.warn('client.streamRun | Message already exists:', messageId, thread.messages);
-            return;
-          }
+					if (message) {
+						console.warn('client.streamRun | Message already exists:', messageId, thread.messages);
+						return;
+					}
 
 					threadStore.update((store) => {
 						thread.messages.push({
@@ -108,17 +110,22 @@
 				},
 				onMessageDelta(messageId: string, delta: string) {
 					threadStore.update((store) => {
-            // Slice the message and re-add it so that Svelte can detect the change
-            const messageIndex = thread.messages.findIndex((m) => m.id === messageId);
-            const message = thread.messages[messageIndex];
+						// Slice the message and re-add it so that Svelte can detect the change
+						const messageIndex = thread.messages.findIndex((m) => m.id === messageId);
+						const message = thread.messages[messageIndex];
 
-            if (message) {
-              message.content = message.content + delta;
-            } else {
-              console.error('client.streamRun | Message not found:', messageId, thread.messages, thread.messages.map(m => m.id));
-            }
+						if (message) {
+							message.content = message.content + delta;
+						} else {
+							console.error(
+								'client.streamRun | Message not found:',
+								messageId,
+								thread.messages,
+								thread.messages.map((m) => m.id)
+							);
+						}
 
-            return store;
+						return store;
 					});
 				},
 				onToolCallCreated(toolCall) {
@@ -147,17 +154,68 @@
 	class="flex h-[500px] w-96 flex-col overflow-hidden rounded-lg border border-slate-700 bg-slate-800"
 	{...attrs}
 >
-	<GroupTitle title={thread.config.name} description={thread.config.description} />
+	<GroupTitle title={thread.config.name} description={thread.config.description}>
+		<div slot="actions">
+			<button
+				aria-label="Show system prompt"
+				title="Show system prompt"
+				onclick={() => (showSystemPrompt = !showSystemPrompt)}
+				class="cursor-pointer opacity-35 transition-transform hover:scale-125"
+			>
+				{#if showSystemPrompt}
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke-width="1.5"
+						stroke="currentColor"
+						class="size-6"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88"
+						/>
+					</svg>
+				{:else}
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke-width="1.5"
+						stroke="currentColor"
+						class="size-6"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"
+						/>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+						/>
+					</svg>
+				{/if}
+			</button>
+		</div>
+	</GroupTitle>
 
 	<div class="flex flex-1 flex-col space-y-4 overflow-y-auto p-4" bind:this={scrollContainer}>
-		{#each messages as message (message.timestamp)}
-			<ChatMessage
-				content={message.content}
-				sender={getSender(message.sender)}
-				timestamp={message.timestamp}
-				isOwn={message.sender === 'user'}
-			/>
-		{/each}
+		{#if showSystemPrompt}
+			<Heading level={3} class="text-emerald-400">System Prompt</Heading>
+			{thread.config.instructions}
+		{:else}
+			{#each messages as message (message.timestamp)}
+				<ChatMessage
+					content={message.content}
+					sender={getSender(message.sender)}
+					timestamp={message.timestamp}
+					isOwn={message.sender === 'user'}
+				/>
+			{/each}
+		{/if}
 	</div>
 
 	<div>
@@ -176,11 +234,11 @@
 					onkeyup={(e) => {
 						if (e.key === 'Enter' && !e.shiftKey) {
 							sendMessage();
-              e.preventDefault();
+							e.preventDefault();
 						} else if (e.key === 'ArrowUp' && e.shiftKey) {
-              // Test string for quick testing
-              userInput = 'What is 2+2?';
-            }
+							// Test string for quick testing
+							userInput = 'What is 2+2?';
+						}
 					}}
 				/>
 				<Button primary disabled={isLoading || !userInput.trim()} onclick={sendMessage}>
