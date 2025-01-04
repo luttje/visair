@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { User } from '$lib/User';
+	import glass_orb from '$lib/assets/glass_orb.png';
   import { apiKey } from '$lib/assistants/ApiKeyStore';
 	import { onMount } from 'svelte';
 	import Button from './Button.svelte';
@@ -44,7 +45,7 @@
 <header>
 	<div class="flex items-center justify-between p-8">
 		<div class="flex flex-row items-center gap-2">
-      <img src="/favicon.png" alt="VisAIR" class="size-16" />
+      <img src={glass_orb} alt="VisAIR" class="size-16" />
 			<Heading level={1}>VisAIR</Heading>
 		</div>
     <div class="flex flex-row items-center gap-4">
