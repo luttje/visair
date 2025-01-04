@@ -5,7 +5,7 @@
 	import { apiKey } from '$lib/assistants/ApiKeyStore';
 	import EmptyState from './EmptyState.svelte';
 
-	import { threadStore, addThreadToStore } from '$lib/assistants/ThreadStore.svelte';
+	import { threadStore, addThreadToStore, getSender } from '$lib/assistants/ThreadStore.svelte';
 
 	import { projectLeadAssistant } from '$lib/assistants/configs/projectLeadAssistant';
 	import Button from './Button.svelte';
@@ -30,8 +30,10 @@
       config: projectLeadAssistant,
       messages: [
         {
+          id: '',
           content: 'Hello, how can I help you today?',
           timestamp: new Date().toISOString(),
+          sender: assistantId,
         },
       ]
     });

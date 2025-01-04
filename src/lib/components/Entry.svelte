@@ -15,17 +15,21 @@
 		errorMessage = '',
     ...attrs
 	}: Props = $props();
-  let required = 'required' in attrs;
+  const isRequired = $derived(attrs.required);
+  const isDisabled = $derived(attrs.disabled);
 </script>
 
 <div class="relative flex-1">
 	{#if label}
 		<label
 			for="input"
-			class={['block', 'text-sm', 'font-medium', 'mb-1', error && 'text-red-500'].join(' ')}
+			class={[
+        'block', 'text-sm', 'font-medium', 'mb-1', error && 'text-red-500',
+        (isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'),
+      ].join(' ')}
 		>
 			{label}
-			{#if required}
+			{#if isRequired}
 				<span class="text-red-500">*</span>
 			{/if}
 		</label>

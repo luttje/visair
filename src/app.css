@@ -2,6 +2,29 @@
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 
-body, html {
+body,
+html {
   @apply bg-slate-900 text-white;
+}
+
+@keyframes letterGlow {
+  0%,
+  100% {
+    opacity: 0.1;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+.glow-letter {
+  opacity: 0.1;
+  display: inline-block;
+  animation: letterGlow calc(var(--animation-duration) * 1s) ease-in-out infinite;
+  animation-delay: var(--animation-delay);
+}
+
+.glow-container {
+  display: inline-block;
 }

@@ -1,6 +1,6 @@
 <!-- TextAreaEntry.svelte -->
 <script lang="ts">
-  import type { HTMLTextareaAttributes } from "svelte/elements";
+  import type { DOMAttributes, HTMLTextareaAttributes } from "svelte/elements";
   
   type Props = {
     value?: string;
@@ -8,7 +8,8 @@
     error?: boolean;
     errorMessage?: string;
     rows?: number;
-  } & HTMLTextareaAttributes;
+  } & DOMAttributes<HTMLTextAreaElement> &
+    HTMLTextareaAttributes;
 
   let {
     value = $bindable(''),

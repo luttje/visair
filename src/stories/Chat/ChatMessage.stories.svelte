@@ -8,7 +8,7 @@
     {
       id: '1',
       name: 'John Doe',
-      avatar: 'https://placekitten.com/100/100',
+      avatar: 'https://i.pravatar.cc/300',
       status: 'online',
       isTyping: false,
       color: 'bg-teal-200'
@@ -16,7 +16,7 @@
     {
       id: '2',
       name: 'Alice Smith',
-      avatar: 'https://placekitten.com/100/100',
+      avatar: 'https://i.pravatar.cc/300',
       status: 'offline',
       isTyping: false,
       color: 'bg-rose-300'
@@ -24,7 +24,7 @@
     {
       id: '3',
       name: 'Bob Wilson',
-      avatar: 'https://placekitten.com/100/100',
+      avatar: 'https://i.pravatar.cc/300',
       status: 'away',
       isTyping: true,
       color: 'bg-sky-300'
@@ -32,7 +32,7 @@
     {
       id: '4',
       name: 'Charlie Brown',
-      avatar: 'https://placekitten.com/100/100',
+      avatar: 'https://i.pravatar.cc/300',
       status: 'offline',
       isTyping: false,
       color: 'bg-amber-300'
@@ -40,7 +40,7 @@
     {
       id: '5',
       name: 'Me',
-      avatar: 'https://placekitten.com/100/100',
+      avatar: 'https://i.pravatar.cc/300',
       status: 'online',
       isTyping: false
     }

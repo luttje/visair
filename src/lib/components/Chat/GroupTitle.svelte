@@ -15,17 +15,17 @@
   }: Props = $props();
 </script>
 
-<div class="border-b border-gray-200 px-4 py-3 text-gray-500" {...attrs}>
+<div class="bg-slate-700 px-4 py-3" {...attrs}>
   <div class="flex items-center justify-between">
     <Heading level={2} class="">
       {title}
     </Heading>
     {#if memberCount !== undefined}
-      <span class="text-sm">{memberCount} members</span>
+      <span class="text-sm text-gray-400">{memberCount} members</span>
     {/if}
   </div>
   
   {#if description}
-    <p class="mt-1 text-sm">{description}</p>
+    <p class="mt-1 text-sm text-gray-400">{description}</p>
   {/if}
 </div>

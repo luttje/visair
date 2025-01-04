@@ -17,6 +17,7 @@ export const projectLeadAssistant: AssistantConfig = {
       'If you are not satisfied with the results, you will ask the personas to try again, using the sendInstructions function.',
       'Be sure to give the personas clear instructions and guidance.',
       'Once the personas have completed the task to your satisfaction, you will compile the results and come up with a final report.',
+      'Finally if the question is very basic and you are confident in the answer, you can answer it yourself.',
     ].join('\n'),
   tools: [
     {
