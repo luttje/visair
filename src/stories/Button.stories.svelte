@@ -10,11 +10,32 @@
     argTypes: {
     },
     args: {
-      onClick: fn(),
+      onclick: fn(),
     }
   });
 </script>
 
-<Story name="Primary" args={{ primary: true, label: 'Button' }} />
+<Story 
+  name="Primary" 
+  args={{ 
+    primary: true,
+  }}>
+  
+  {#snippet children(args)}
+    <Button {...args}>
+      Test Button
+    </Button>
+  {/snippet}
+</Story>
 
-<Story name="Secondary" args={{ label: 'Button' }} />
+<Story 
+  name="Secondary" 
+  args={{ 
+  }}>
+  
+  {#snippet children(args)}
+    <Button {...args}>
+      Test Secondary Button
+    </Button>
+  {/snippet}
+</Story>

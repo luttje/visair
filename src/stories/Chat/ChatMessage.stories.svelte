@@ -72,10 +72,6 @@
         control: 'boolean',
         description: 'Whether the message is private'
       },
-      avatar: {
-        control: 'text',
-        description: 'URL of the sender avatar'
-      }
     }
   });
 </script>
@@ -120,7 +116,6 @@
     sender: personas[1],
     timestamp: "10:40 AM",
     isOwn: false,
-    avatar: "https://placekitten.com/100/100"
   }}
 />
 

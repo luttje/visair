@@ -22,7 +22,7 @@
   let required = 'required' in attrs;
 </script>
 
-<div class="relative">
+<div class="relative flex-1">
   {#if label}
     <label
       for="textarea"

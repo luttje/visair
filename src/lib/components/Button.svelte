@@ -1,11 +1,13 @@
 <script lang="ts">
-	type Props = {
+	import type { Snippet } from "svelte";
+	import type { HTMLButtonAttributes } from "svelte/elements";
+
+	type Props = HTMLButtonAttributes & {
 		primary?: boolean;
-		label: string;
-		onClick?: () => void;
+    children?: Snippet;
 	};
 
-	const { primary = false, label, onClick }: Props = $props();
+	const { children, primary = false, ...args }: Props = $props();
 </script>
 
 <button
@@ -13,7 +15,7 @@
 	class={['rounded-md', 'px-4', 'py-2', 'text-white', 'font-semibold', 'text-center'].join(' ')}
 	class:bg-emerald-600={primary}
 	class:bg-slate-700={!primary}
-	onclick={onClick}
+	{...args}
 >
-	{label}
+  {@render children?.()}
 </button>

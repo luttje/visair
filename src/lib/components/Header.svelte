@@ -1,5 +1,7 @@
 <script lang="ts">
 	import type { User } from '$lib/User';
+  import { apiStore } from '$lib/ApiStore.svelte';
+	import { onMount } from 'svelte';
 	import Button from './Button.svelte';
 	import Entry from './Entry.svelte';
 	import Heading from './Heading.svelte';
@@ -9,21 +11,29 @@
   }
 
 	let { user }: Props = $props();
-
 	let showApiKey = $state(false);
-  let apiKey = $state('');
+  let apiKey = $state(apiStore.getApiKey());
 
   const onLogin = () => {
     user = {
       apiKey
     };
 
-    console.log(user);
+    apiStore.setApiKey(apiKey);
   };
 
   const onLogout = () => {
     user = undefined;
+    apiStore.clearApiKey();
   };
+
+  onMount(() => {
+    if (apiKey) {
+      user = {
+        apiKey
+      };
+    }
+  });
 </script>
 
 <header>
@@ -31,26 +41,26 @@
 		<div>
 			<Heading level={1}>VisAIR</Heading>
 		</div>
-		<div>
+    <div class="flex flex-row items-center gap-4">
 			{#if user}
-				<span class="welcome">
+				<div class="flex flex-row items-center gap-4">
 					{#if showApiKey}
-						<span class="text-xs">{user.apiKey}</span>
+            <Entry value={user.apiKey} />
 					{/if}
 					<Button
 						primary
-						label={showApiKey ? 'Hide API key' : 'Show API key'}
-						onClick={() => {
+						onclick={() => {
 							showApiKey = !showApiKey;
 						}}
-					/>
-				</span>
-				<Button onClick={onLogout} label="Log out" />
+					>
+            {showApiKey ? 'Hide API key' : 'Show API key'}
+          </Button>
+				</div>
+				<Button onclick={onLogout}>Log out</Button>
 			{:else}
       <div class="flex flex-row items-end gap-4">
-        <Entry label="OpenAI API key"
-          bind:value={apiKey} />
-				<Button onClick={onLogin} label="Log in" />
+        <Entry placeholder="OpenAI API key" bind:value={apiKey} />
+				<Button onclick={onLogin}>Log in</Button>
       </div>
 			{/if}
 		</div>

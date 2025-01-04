@@ -2,7 +2,7 @@
 	import type { HTMLInputAttributes } from "svelte/elements";
 
 	type Props = {
-		value?: string;
+		value?: any;
 		label?: string;
 		error?: boolean;
 		errorMessage?: string;
@@ -18,7 +18,7 @@
   let required = 'required' in attrs;
 </script>
 
-<div class="relative">
+<div class="relative flex-1">
 	{#if label}
 		<label
 			for="input"
