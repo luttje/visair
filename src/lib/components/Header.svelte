@@ -43,7 +43,8 @@
 
 <header>
 	<div class="flex items-center justify-between p-8">
-		<div>
+		<div class="flex flex-row items-center gap-2">
+      <img src="/favicon.png" alt="VisAIR" class="size-16" />
 			<Heading level={1}>VisAIR</Heading>
 		</div>
     <div class="flex flex-row items-center gap-4">
