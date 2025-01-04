@@ -1,38 +1,42 @@
-# sv
+# 🔮 VisAIR (prototype)
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+*<u>Vis</u>ualizing <u>A</u>rtificial <u>I</u>ntelligence <u>R</u>easoning*
 
-## Creating a project
+This prototype visualizes Multi-Persona Self-Collaboration in large language models. You are expected to bring your own OpenAI API key. This project currently uses the [OpenAI GPT-4o-mini model](https://platform.openai.com/docs/models#gpt-4o-mini) in combination with the [Assistants API](https://platform.openai.com/docs/assistants/overview).
 
-If you're seeing this, you've probably already done this step. Congrats!
+> [!NOTE]
+> Your API key is only stored in your browser's LocalStorage. It is not sent anywhere. Nevertheless, you should be careful entering your API key anywhere. It is recommended you understand the source code and then get this project running locally to use it from there.
 
-```bash
-# create a new project in the current directory
-npx sv create
+## 🚀 Getting Started
 
-# create a new project in my-app
-npx sv create my-app
-```
+1. Clone the repository:
 
-## Developing
+  ```bash
+  git clone
+  ```
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+2. Install dependencies:
 
-```bash
-npm run dev
+  ```bash
+  npm install
+  ```
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
+3. Start the server and open the app in a new browser tab:
 
-## Building
+  ```bash
+  npm run dev -- --open
+  ```
 
-To create a production version of your app:
+4.
 
-```bash
-npm run build
-```
+## 🔬 Background
 
-You can preview the production build with `npm run preview`.
+While letting OpenAI-o1 write some mundane code for me, I noticed that at one point it slipped up and showed a name in its reasoning details. This made me think it could work by combining multiple personas to solve tasks. As a fun exercise I decided to build this prototype to visualize this reasoning process.
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+<div align="center">
+
+[<img src="./docs/o1-slip-up.jpg" alt="Chat with GPT-o1 showing a name in its reasoning details, the name is circled" width="250">](./docs/o1-slip-up.jpg)
+
+</div>
+
+During my research I ran into this interesting paper: [*Unleashing Cognitive Synergy In Large Language Models: A Task-Solving Agent Through Multi-Persona Self-Collaboration* (paper)](https://arxiv.org/abs/2307.05300)
