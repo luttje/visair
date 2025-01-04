@@ -7,7 +7,7 @@
   type Props = {
     content: string;
     sender: Member;
-    timestamp: Date;
+    timestamp: string;
     isOwn?: boolean;
     isPrivate?: boolean;
   };
@@ -35,7 +35,7 @@
     <div class={`flex flex-col ${isOwn ? 'items-end' : ''}`}>
       <div class="flex items-center gap-2 mb-1">
         <span class="text-sm font-medium">{sender.name}</span>
-        <span class="text-xs text-gray-500">{timestamp.toLocaleTimeString()}</span>
+        <span class="text-xs text-gray-500">{new Date(timestamp).toLocaleTimeString()}</span>
       </div>
 
       <div class={[

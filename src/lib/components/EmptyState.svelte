@@ -3,5 +3,7 @@
     <slot></slot>
   </div>
   
-  <p class="text-xl"><slot name="text"></slot></p>
+  <div class="text-xl"><slot name="text"></slot></div>
+
+  <slot name="actions"></slot>
 </div>

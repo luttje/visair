@@ -5,6 +5,8 @@
 	import type { AssistantClient } from '$lib/assistants/AssistantClient';
 	import GroupTitle from './Chat/GroupTitle.svelte';
 	import ChatMessage from './Chat/ChatMessage.svelte';
+	import { getRandomColor } from '$lib/Utilities';
+	import { threadStore } from '$lib/assistants/ThreadStore.svelte';
 
   type Props = {
     thread: AssistantThread;
@@ -20,12 +22,24 @@
   let userInput = $state('');
   let isLoading = $state(false);
 
+  const ensureColorSet = () => {
+    if (!thread.config.color) {
+      threadStore.update(store => {
+        thread.config.color = getRandomColor();
+        return store;
+      });
+    }
+  };
+
+  $effect(ensureColorSet);
+  ensureColorSet();
+
   const sendMessage = async () => {
     if (!userInput.trim() || isLoading) return;
     
     isLoading = true;
     try {
-      await client.sendMessage(thread.id, userInput);
+      // await client.sendMessage(thread.id, userInput);
       userInput = '';
     } catch (error) {
       console.error('Error sending message:', error);
@@ -46,10 +60,9 @@
     {#each thread.messages as message (message.timestamp)}
       <ChatMessage
         content={message.content}
-        sender={message.sender}
+        sender={message.sender ?? thread.config}
         timestamp={message.timestamp}
-        isOwn={message.sender.name === 'You'}
-      />
+        />
     {/each}
   </div>
 

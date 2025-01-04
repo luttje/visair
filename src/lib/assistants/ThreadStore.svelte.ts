@@ -1,44 +1,42 @@
 import { writable, derived, get } from 'svelte/store';
 import type { AssistantThread } from './AssistantThread';
+import { browser } from '$app/environment';
 
-interface ThreadStore {
-  [threadId: string]: AssistantThread;
+export type ThreadStore = Map<string, AssistantThread>;
+
+// Restore recent threads from local storage, or create an empty Map
+const restoredRecentThreads = new Map<string, AssistantThread>();
+
+if (browser) {
+  const storedRecentThreads = localStorage.getItem('recentThreads');
+
+  if (storedRecentThreads) {
+    const parsedRecentThreads = JSON.parse(storedRecentThreads);
+
+    for (const [assistantId, thread] of Object.entries(parsedRecentThreads)) {
+      restoredRecentThreads.set(assistantId, thread as AssistantThread);
+    }
+  }
 }
 
-const createThreadStore = () => {
-  const { subscribe, set, update } = writable<ThreadStore>({});
+export const threadStore = writable<ThreadStore>(restoredRecentThreads);
 
-  return {
-    subscribe,
-    set,
-    update,
+threadStore.subscribe(value => {
+  if (!browser)
+    return;
 
-    getThread: (threadId: string) => {
-      const store = get({ subscribe });
-      return store[threadId];
-    },
+  const valueAsObject: Record<string, AssistantThread> = {};
 
-    getAllThreads: () => {
-      return Object.values(get({ subscribe }));
-    },
+  for (const [assistantId, thread] of value) {
+    valueAsObject[assistantId] = thread;
+  }
 
-    addThread: (thread: AssistantThread) => {
-      update(store => ({
-        ...store,
-        [thread.id]: thread
-      }));
-    },
+  localStorage.setItem('recentThreads', JSON.stringify(valueAsObject));
+});
 
-    updateThread: (threadId: string, updates: Partial<AssistantThread>) => {
-      update(store => ({
-        ...store,
-        [threadId]: {
-          ...store[threadId],
-          ...updates
-        }
-      }));
-    }
-  };
+export const addThreadToStore = (thread: AssistantThread) => {
+  threadStore.update(store => {
+    store.set(thread.id, thread);
+    return store;
+  });
 };
-
-export const threads = createThreadStore();

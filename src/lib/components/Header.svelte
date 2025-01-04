@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { User } from '$lib/User';
-  import { apiStore } from '$lib/ApiStore.svelte';
+  import { apiKey } from '$lib/assistants/ApiKeyStore';
 	import { onMount } from 'svelte';
 	import Button from './Button.svelte';
 	import Entry from './Entry.svelte';
@@ -11,26 +11,31 @@
   }
 
 	let { user }: Props = $props();
+
+  let chooseApiKey = $state('');
 	let showApiKey = $state(false);
-  let apiKey = $state(apiStore.getApiKey());
 
   const onLogin = () => {
+    if (!chooseApiKey) {
+      return;
+    }
+
     user = {
-      apiKey
+      apiKey: chooseApiKey
     };
 
-    apiStore.setApiKey(apiKey);
+    apiKey.set(chooseApiKey);
   };
 
   const onLogout = () => {
     user = undefined;
-    apiStore.clearApiKey();
+    apiKey.set(null);
   };
 
   onMount(() => {
-    if (apiKey) {
+    if ($apiKey) {
       user = {
-        apiKey
+        apiKey: $apiKey
       };
     }
   });
@@ -59,7 +64,7 @@
 				<Button onclick={onLogout}>Log out</Button>
 			{:else}
       <div class="flex flex-row items-end gap-4">
-        <Entry placeholder="OpenAI API key" bind:value={apiKey} />
+        <Entry placeholder="OpenAI API key" bind:value={chooseApiKey} />
 				<Button onclick={onLogin}>Log in</Button>
       </div>
 			{/if}
