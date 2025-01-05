@@ -34,7 +34,7 @@
 	let cachedProjectLead: AssistantConfig | null = $state(null);
 	let enableCustomInstructions: boolean = $state(false);
 	let customInstructions: string = $state(projectLeadAssistant.instructions);
-	let isLoading: boolean = $state(false);
+	let isBlockedFromEnteringFirstPrompt: boolean = $state(false);
 	let userInput: string = $state('');
 
 	if (preprocessingPipeline) {
@@ -74,8 +74,6 @@
 		relevantNewData: string
 	): Promise<string> => {
 		if (!client) throw new Error('Client not initialized');
-
-		console.log('Creating persona', personaId, name, emoji, expertise, instructions);
 
 		const assistantConfig = {
 			personaId: personaId,
@@ -231,7 +229,6 @@
 
 			onComplete(threadId: string) {
 				console.log('onComplete | Run completed', threadId);
-				isLoading = false;
 			},
 
 			onError(threadId: string, error) {
@@ -303,7 +300,6 @@
 	const enablePreprocessingCallbacks = (client: AssistantClient) => {
 		client.setCallbacks({
 			onProgressText(threadId, progressText) {
-				console.log('preprocess | onProgressText | Progress:', threadId, progressText);
 			},
 			onComplete(threadId: string) {
 				console.log('preprocess | onComplete | Preprocessing completed', threadId);
@@ -339,10 +335,6 @@
 						preprocessingJobs
 					);
 					return;
-				}
-
-				for (const job of preprocessingJobs) {
-					console.log('preprocess | onMessageDelta | Job:', job);
 				}
 
 				job.result = job.result + delta;
@@ -405,15 +397,14 @@
 		const threads = $threadStore;
 
 		try {
+      isBlockedFromEnteringFirstPrompt = false;
+
 			for (const [threadId, thread] of threads) {
 				await client.deleteThread(threadId);
-
-        if (thread.assistantId === cachedProjectLead?.id) {
-          await forceClearCachedProjectLead(client);
-        } else {
-          await client.deleteAssistant(thread.assistantId);
-        }
+        await client.deleteAssistant(thread.assistantId);
 			}
+
+      cachedProjectLead = null;
 		} finally {
 			threadStore.set(new Map());
 		}
@@ -436,6 +427,7 @@
 		cachedProjectLead = null;
 
 		await forceClearThreads(client);
+
 		try {
 			await client.deleteAssistant(assistantRemoving.id);
 		} catch (error) {
@@ -458,14 +450,14 @@
 	const sendMessage = async () => {
 		if (!client) return;
 
-		if (!userInput.trim() || isLoading) return;
+		if (!userInput.trim() || isBlockedFromEnteringFirstPrompt) return;
 
 		if (!preprocessingPipeline) {
 			console.error('Preprocessing pipeline not initialized');
 			return;
 		}
 
-		isLoading = true;
+		isBlockedFromEnteringFirstPrompt = true;
 
 		try {
 			enablePreprocessingCallbacks(client);
@@ -513,9 +505,8 @@
 			userInput = '';
 		} catch (error) {
 			console.error('Error sending message:', error);
-		} finally {
-			isLoading = false;
-		}
+      isBlockedFromEnteringFirstPrompt = false;
+    }
 	};
 </script>
 
@@ -538,7 +529,7 @@
 				<TextAreaEntry
 					bind:value={userInput}
 					placeholder="Type your message..."
-					disabled={isLoading}
+					disabled={isBlockedFromEnteringFirstPrompt}
 					rows={2}
 					onkeyup={(e) => {
 						if (e.key === 'Enter' && !e.shiftKey) {
@@ -558,7 +549,7 @@
 				<Button
 					primary
 					class="self-stretch"
-					disabled={isLoading || !userInput.trim()}
+					disabled={isBlockedFromEnteringFirstPrompt || !userInput.trim()}
 					onclick={sendMessage}>Send</Button
 				>
 			</div>
@@ -584,7 +575,11 @@
 		</Container>
 		<Container class={['flex', 'flex-row', 'flex-wrap', 'gap-4'].join(' ')}>
 			{#each $threadStore as [threadId, thread], index (threadId)}
-				<ReasoningContainer {thread} {client} />
+				<ReasoningContainer
+          {thread}
+          {client}
+          withChat={isBlockedFromEnteringFirstPrompt && index === 0}
+          />
 			{/each}
 		</Container>
 	</div>

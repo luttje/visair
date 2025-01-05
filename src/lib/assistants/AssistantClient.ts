@@ -311,6 +311,8 @@ export class AssistantClient {
 
         const result = await this.submitToolOutputs(runId, threadId, toolOutputs);
 
+        this.callbacks.onProgressText?.(threadId, '');
+
         console.log('tool outputs submitted completely', result);
 
         break;
