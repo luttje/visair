@@ -2,11 +2,10 @@ import type { AssistantConfig } from "./AssistantConfig";
 import { apiLimit, apiLimitCount, incrementApiLimitCount } from "./ApiLimitStore";
 import { get } from "svelte/store";
 import type { ToolResult } from "./Tools";
-import { createPersonaFunctionName, sendInstructionsFunctionName } from "./configs/projectLeadAssistant";
-import { addThreadToStore, threadStore } from "./ThreadStore.svelte";
 
 export type StreamCallbacks = {
   onProgressText?: (threadId: string, progressText: string) => void;
+  onHandleToolCall?: (threadId: string, name: string, parameters: any) => Promise<string | undefined>;
   onMessageCreated?: (threadId: string, assistantId: string, messageId: string) => void;
   onMessageDelta?: (threadId: string, messageId: string, delta: string) => void;
   onError?: (threadId: string, error: Error) => void;
@@ -259,29 +258,6 @@ export class AssistantClient {
     return fullText;
   }
 
-  private async handleToolCall(toolCall: any): Promise<string> {
-    if (toolCall.type !== 'function') {
-      console.warn('Unexpected tool call type:', toolCall.type);
-      return 'unknown';
-    }
-
-    const name = toolCall.function.name;
-    const parameters = JSON.parse(toolCall.function.arguments);
-
-    if (name === createPersonaFunctionName) {
-      const { personaId, name, emoji, expertise, instructions } = parameters;
-
-      return await this.handleCreatePersona(personaId, name, emoji, expertise, instructions);
-    } else if (name === sendInstructionsFunctionName) {
-      const { personaId, instructions } = parameters;
-
-      return await this.handleSendInstructions(personaId, instructions);
-    } else {
-      console.error('Unhandled tool call:', toolCall);
-      throw new Error(`Unhandled tool call: ${name}`);
-    }
-  }
-
   private async submitToolOutputs(runId: string, threadId: string, toolOutputs: ToolResult[]) {
     await this.checkLimit();
 
@@ -298,99 +274,6 @@ export class AssistantClient {
     return await this.processStreamResponse(threadId, response, runId);
   }
 
-  private async handleCreatePersona(personaId: string, name: string, emoji: string, expertise: string, instructions: string): Promise<string> {
-    console.log('Creating persona', personaId, name, emoji, expertise, instructions);
-
-    const assistantConfig = {
-      personaId: personaId,
-      name: name,
-      avatar: emoji,
-      description: expertise,
-      instructions: instructions,
-    };
-    const assistantId = await this.createAssistant(assistantConfig);
-    
-    const assistant = {
-      ...assistantConfig,
-      id: assistantId,
-    };
-
-    console.log('Created persona', personaId, assistantId);
-
-    // Create a thread for the persona
-    const threadId = await this.createThread();
-
-    addThreadToStore({
-			id: threadId,
-			assistantId,
-			config: assistant,
-      messages: [],
-    });
-    
-    // Add the instructions to the thread
-    const role = 'user'; // the user is the project lead asking the persona to do something
-    const messageId = await this.addMessage(threadId, role, instructions);
-
-    threadStore.update((store) => {
-      const thread = store.get(threadId);
-
-      if (!thread) {
-        throw new Error(`Thread not found: ${threadId}`);
-      }
-
-      thread.messages.push({
-        id: messageId,
-        content: instructions,
-        sender: role,
-        timestamp: new Date().toISOString()
-      });
-
-      return store;
-    });
-
-    // Stream the run
-    const textResult = await this.streamRun(threadId, assistantId);
-
-    return textResult;
-  }
-
-  private async handleSendInstructions(personaId: string, instructions: string) {
-    console.log('Sending instructions to persona', personaId, instructions);
-
-    const threads = get(threadStore);
-    const thread = threads.entries().find(([threadId, thread]) => thread.config.personaId === personaId);
-
-    if (!thread) {
-      console.error('Thread not found for personaId:', personaId, threads);
-      throw new Error('Thread not found');
-    }
-
-    const threadId = thread[0];
-    const messageId = await this.addMessage(threadId, 'user', instructions);
-
-    threadStore.update((store) => {
-      const thread = store.get(threadId);
-
-      if (!thread) {
-        throw new Error(`Thread not found: ${threadId}`);
-      }
-
-      thread.messages.push({
-        id: messageId,
-        content: instructions,
-        sender: 'user',
-        timestamp: new Date().toISOString()
-      });
-
-      return store;
-    });
-
-    // Stream the run
-    const textResult = await this.streamRun(threadId, thread[1].assistantId);
-
-    return textResult;
-  }
-
   private async handleEvent(threadId: string, runId: string, eventType: string, data: any) {
     switch (eventType) {
       case 'thread.run.requires_action':
@@ -398,10 +281,29 @@ export class AssistantClient {
 
         console.log(data);
 
+        if (!this.callbacks.onHandleToolCall) {
+          console.error('No onHandleToolCall callback provided, but tool call required:', data);
+          return;
+        }
+
         const toolOutputs: ToolResult[] = await Promise.all(data.required_action.submit_tool_outputs.tool_calls.map(async (toolCall: any) => {
+          if (toolCall.type !== 'function') {
+            console.warn('Unexpected tool call type:', toolCall.type);
+            return 'unknown';
+          }
+
+          const name = toolCall.function.name;
+          const parameters = JSON.parse(toolCall.function.arguments);
+          const result = await this.callbacks.onHandleToolCall!(threadId, name, parameters);
+
+          if (result === undefined) {
+            console.error('Unhandled tool call:', toolCall);
+            throw new Error(`Unhandled tool call: ${name}`);
+          }
+
           return {
             tool_call_id: toolCall.id,
-            output: await this.handleToolCall(toolCall),
+            output: result,
           };
         }));
 
