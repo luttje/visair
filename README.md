@@ -27,7 +27,9 @@ This prototype visualizes Multi-Persona Self-Collaboration in large language mod
   npm run dev -- --open
   ```
 
-4.
+## 🖼 Media
+
+https://github.com/user-attachments/assets/dbe4919e-3148-48c3-bcc6-9c4dc3e0eed4
 
 ## 🔬 Background
 
