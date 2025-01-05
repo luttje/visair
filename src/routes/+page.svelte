@@ -5,20 +5,25 @@
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import Entry from '$lib/components/Entry.svelte';
 	import GroupReasoningContainer from '$lib/components/GroupReasoningContainer.svelte';
+	import Label from '$lib/components/Label.svelte';
 
 	let chooseApiLimit: number = $state(100);
 
 	$effect(() => apiLimit.set(chooseApiLimit));
 </script>
 
-<main class="flex flex-col gap-4 p-8 container mx-auto max-w-7xl">
+<main class="container mx-auto flex max-w-7xl flex-col gap-4 p-8">
 	{#if $apiKey}
-    <div class="flex flex-row gap-4 items-center bg-slate-800 p-4 rounded-lg">
-      <Entry label="API Limit" type="number" bind:value={chooseApiLimit} />
-      <span>
-        Used: {$apiLimitCount}/{$apiLimit}
-      </span>
-    </div>
+		<div class="flex flex-row items-center gap-4 rounded-lg bg-slate-800 p-4">
+      <Label for="apiLimit">API Limit:</Label>
+			<Entry id="apiLimit" type="number" bind:value={chooseApiLimit} />
+			<div class="flex flex-col items-center text-xs text-slate-400">
+				<span> API Calls Performed: </span>
+				<span>
+					{$apiLimitCount}/{$apiLimit}
+				</span>
+			</div>
+		</div>
 
 		<GroupReasoningContainer />
 	{:else}

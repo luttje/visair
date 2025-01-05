@@ -7,6 +7,18 @@ html {
   @apply bg-slate-900 text-white;
 }
 
+ol {
+  @apply list-decimal list-inside;
+}
+
+ul {
+  @apply list-disc list-inside;
+}
+
+ol, ul {
+  @apply mb-4 pl-4;
+}
+
 @keyframes letterGlow {
   0%,
   100% {

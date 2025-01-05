@@ -1,4 +1,3 @@
-<!-- TextAreaEntry.svelte -->
 <script lang="ts">
 	import type { DOMAttributes, HTMLTextareaAttributes } from 'svelte/elements';
 	import Label from './Label.svelte';
