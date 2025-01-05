@@ -6,6 +6,7 @@
 	import Button from './Button.svelte';
 	import Entry from './Entry.svelte';
 	import Heading from './Heading.svelte';
+  import { base } from '$app/paths';
 
   type Props = {
     user?: User;
@@ -44,7 +45,7 @@
 
 <header class="container mx-auto max-w-7xl">
 	<div class="flex items-center justify-between p-8">
-		<a class="flex flex-row items-center gap-2" href="/">
+		<a class="flex flex-row items-center gap-2" href="{base}/">
       <img src={glass_orb} alt="VisAIR" class="size-12 md:size-16" />
       <Heading level={1}>VisAIR</Heading>
 		</a>
