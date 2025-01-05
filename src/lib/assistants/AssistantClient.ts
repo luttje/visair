@@ -19,6 +19,11 @@ export class RateLimitError extends Error {
   }
 }
 
+export type MessageRequest = {
+  role: 'user' | 'assistant',
+  content: string
+};
+
 const EVENT_PREFIX = 'event: ';
 const DATA_PREFIX = 'data: ';
 
@@ -137,13 +142,8 @@ export class AssistantClient {
   /**
    * Add a message to a thread, returning the message ID
    */
-  async addMessage(threadId: string, role: 'user' | 'assistant', content: string) {
+  async addMessage(threadId: string, data: MessageRequest) {
     await this.checkLimit();
-
-    const data = {
-      role,
-      content
-    };
 
     const response = await this.fetch(`/threads/${threadId}/messages`, {
       method: 'POST',
@@ -363,6 +363,23 @@ export class AssistantClient {
         break;
       default:
         console.log('Unhandled event', eventType);
+    }
+  }
+
+  /**
+   * Creates a transient assistant and thread, runs with a stream,
+   * and then deletes the assistant and thread.
+   */
+  async messageTransientAssistant(config: Omit<AssistantConfig, 'id'>, message: MessageRequest) {
+    const assistantId = await this.createAssistant(config);
+    const threadId = await this.createThread();
+
+    try {
+      await this.addMessage(threadId, message);
+      return await this.streamRun(threadId, assistantId);
+    } finally {
+      await this.deleteAssistant(assistantId);
+      await this.deleteThread(threadId);
     }
   }
 }

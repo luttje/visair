@@ -14,7 +14,7 @@
 	type Props = {
 		thread: AssistantThread;
 		client: AssistantClient;
-    withChat?: boolean;
+		withChat?: boolean;
 	};
 
 	let { thread, client, withChat = false, ...attrs }: Props = $props();
@@ -32,7 +32,7 @@
 
 		if (updatedThread) {
 			messages = thread.messages;
-      progressText = updatedThread.progressText || '';
+			progressText = updatedThread.progressText || '';
 
 			// We have to wait a frame for the scroll to be updated
 			setTimeout(() => {
@@ -68,7 +68,10 @@
 		isLoading = true;
 
 		try {
-			const messageId = await client.addMessage(thread.id, 'user', userInput);
+			const messageId = await client.addMessage(thread.id, {
+				role: 'user',
+				content: userInput
+			});
 
 			threadStore.update((store) => {
 				thread.messages.push({
@@ -101,7 +104,10 @@
 	class="flex h-[500px] w-96 flex-col overflow-hidden rounded-lg border border-slate-700 bg-slate-800"
 	{...attrs}
 >
-	<GroupTitle title={`${thread.config.avatar || ''} ${thread.config.name}`} description={thread.config.description}>
+	<GroupTitle
+		title={`${thread.config.avatar || ''} ${thread.config.name}`}
+		description={thread.config.description}
+	>
 		<div slot="actions">
 			<button
 				aria-label="Show system prompt"
@@ -148,11 +154,11 @@
 			</button>
 		</div>
 	</GroupTitle>
-  {#if progressText}
-    <div class="px-4 py-2">
-      <ProgressText>{progressText}</ProgressText>
-    </div>
-  {/if}
+	{#if progressText}
+		<div class="px-4 py-2">
+			<ProgressText>{progressText}</ProgressText>
+		</div>
+	{/if}
 
 	<div class="flex flex-1 flex-col space-y-4 overflow-y-auto p-4" bind:this={scrollContainer}>
 		{#if showSystemPrompt}
@@ -170,34 +176,35 @@
 		{/if}
 	</div>
 
-  {#if withChat}
-	<div>
-		<div class="border-t border-slate-700 bg-slate-900 p-4">
-			<div class="flex gap-2">
-				<TextAreaEntry
-					bind:value={userInput}
-					placeholder="Type your message..."
-					disabled={isLoading}
-					rows={2}
-					onkeyup={(e) => {
-						if (e.key === 'Enter' && !e.shiftKey) {
-							sendMessage();
-							e.preventDefault();
-						} else if (e.key === 'ArrowUp' && e.shiftKey) {
-							// Test string for quick testing (based on https://arxiv.org/pdf/2307.05300)
-							userInput = 'Write a short, one-paragraph background story of an NPC for the next Legend of Zelda game. The background story should mention (1) the incantation of the Patronus Charm in Harry Potter (2) the name of a character who is beheaded in the ninth episode of the Game of Thrones TV series, and (3) the name of the last song in the second album by Boards of Canada.';
-              // Should fit in Zelda, e.g: Land of Hyrule, Link, Zelda, Ganon, Triforce, Master Sword, etc.
-              // Should mention the incantation of the Patronus Charm in Harry Potter: Expecto Patronum
-              // Should mention the Game of Thrones character who is beheaded in the ninth episode: Eddard "Ned" Stark, known as The Quiet Wolf
-              // Should mention the name of the last song in the second album by Boards of Canada. The second album is Geogaddi, and the last song is "Magic Window"
-						}
-					}}
-				/>
-				<Button primary disabled={isLoading || !userInput.trim()} onclick={sendMessage}>
-					Send
-				</Button>
+	{#if withChat}
+		<div>
+			<div class="border-t border-slate-700 bg-slate-900 p-4">
+				<div class="flex gap-2">
+					<TextAreaEntry
+						bind:value={userInput}
+						placeholder="Type your message..."
+						disabled={isLoading}
+						rows={2}
+						onkeyup={(e) => {
+							if (e.key === 'Enter' && !e.shiftKey) {
+								sendMessage();
+								e.preventDefault();
+							} else if (e.key === 'ArrowUp' && e.shiftKey) {
+								// Test string for quick testing (based on https://arxiv.org/pdf/2307.05300)
+								userInput =
+									'Write a short, one-paragraph background story of an NPC for the next Legend of Zelda game. The background story should mention (1) the incantation of the Patronus Charm in Harry Potter (2) the name of a character who is beheaded in the ninth episode of the Game of Thrones TV series, and (3) the name of the last song in the second album by Boards of Canada.';
+								// Should fit in Zelda, e.g: Land of Hyrule, Link, Zelda, Ganon, Triforce, Master Sword, etc.
+								// Should mention the incantation of the Patronus Charm in Harry Potter: Expecto Patronum
+								// Should mention the Game of Thrones character who is beheaded in the ninth episode: Eddard "Ned" Stark, known as The Quiet Wolf
+								// Should mention the name of the last song in the second album by Boards of Canada. The second album is Geogaddi, and the last song is "Magic Window"
+							}
+						}}
+					/>
+					<Button primary disabled={isLoading || !userInput.trim()} onclick={sendMessage}>
+						Send
+					</Button>
+				</div>
 			</div>
 		</div>
-	</div>
-  {/if}
+	{/if}
 </div>
