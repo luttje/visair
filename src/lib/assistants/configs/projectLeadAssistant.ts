@@ -38,10 +38,14 @@ export const projectLeadAssistant: Omit<AssistantConfig, 'id'> = {
             },
             instructions: {
               type: 'string',
-              description: 'Clear, step-by-step instructions for the persona to follow with their expertise.',
+              description: 'Clear instructions for the persona to follow with their expertise.',
             },
+            relevantNewData: {
+              type: 'string',
+              description: 'All data this persona needs to know to complete their task, like data from previous personas.',
+            }
           },
-          required: ['personaId', 'name', 'emoji', 'expertise', 'instructions'],
+          required: ['personaId', 'name', 'emoji', 'expertise', 'instructions', 'relevantNewData'],
           additionalProperties: false,
         },
         strict: true,
@@ -63,8 +67,12 @@ export const projectLeadAssistant: Omit<AssistantConfig, 'id'> = {
               type: 'string',
               description: 'Follow-up instructions for the persona to improve their work.',
             },
+            relevantNewData: {
+              type: 'string',
+              description: 'All data this persona needs to know to complete their task, like data from previous personas.',
+            }
           },
-          required: ['personaId', 'instructions'],
+          required: ['personaId', 'instructions', 'relevantNewData'],
           additionalProperties: false,
         },
         strict: true,

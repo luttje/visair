@@ -43,14 +43,14 @@
 		preprocessingPipeline.addJobChangedCallback((job) => {
 			if (job.status === 'processing' && !preprocessingJobs.includes(job)) {
 				job.index = preprocessingJobs.push(job) - 1;
-        job.result = 'Processing...';
-        preprocessingJobs[job.index!] = job; // HACK to force update (since job was pushed later, its not reactive)
+				job.result = 'Processing...';
+				preprocessingJobs[job.index!] = job; // HACK to force update (since job was pushed later, its not reactive)
 			} else if (job.status === 'pending') {
 				preprocessingJobs.slice(preprocessingJobs.indexOf(job), 1);
-        job.index = undefined;
+				job.index = undefined;
 			} else if (job.status === 'completed') {
-        preprocessingJobs[job.index!] = job; // HACK to force update (since job was pushed later, its not reactive)
-      }
+				preprocessingJobs[job.index!] = job; // HACK to force update (since job was pushed later, its not reactive)
+			}
 		});
 	}
 
@@ -70,7 +70,8 @@
 		name: string,
 		emoji: string,
 		expertise: string,
-		instructions: string
+		instructions: string,
+		relevantNewData: string
 	): Promise<string> => {
 		if (!client) throw new Error('Client not initialized');
 
@@ -104,9 +105,11 @@
 
 		// Add the instructions to the thread
 		const role = 'user'; // the user is the project lead asking the persona to do something
+		const newInstructions =
+			relevantNewData.trim() !== '' ? `${instructions}\n\n${relevantNewData}` : instructions;
 		const messageId = await client.addMessage(threadId, {
 			role,
-			content: instructions
+			content: newInstructions
 		});
 
 		threadStore.update((store) => {
@@ -118,7 +121,7 @@
 
 			thread.messages.push({
 				id: messageId,
-				content: instructions,
+				content: newInstructions,
 				sender: role,
 				timestamp: new Date().toISOString()
 			});
@@ -131,7 +134,11 @@
 		return textResult;
 	};
 
-	const handleSendInstructions = async (personaId: string, instructions: string) => {
+	const handleSendInstructions = async (
+		personaId: string,
+		instructions: string,
+		relevantNewData: string
+	) => {
 		if (!client) throw new Error('Client not initialized');
 
 		console.log('Sending instructions to persona', personaId, instructions);
@@ -147,9 +154,11 @@
 		}
 
 		const threadId = thread[0];
+		const newInstructions =
+			relevantNewData.trim() !== '' ? `${instructions}\n\n${relevantNewData}` : instructions;
 		const messageId = await client.addMessage(threadId, {
 			role: 'user',
-			content: instructions
+			content: newInstructions
 		});
 
 		threadStore.update((store) => {
@@ -161,7 +170,7 @@
 
 			thread.messages.push({
 				id: messageId,
-				content: instructions,
+				content: newInstructions,
 				sender: 'user',
 				timestamp: new Date().toISOString()
 			});
@@ -174,11 +183,11 @@
 		return textResult;
 	};
 
-  /**
-   * Enables callbacks for threads. Only active once preprocessing is done
-   * and we know that threadIds will exist in the thread store.
-   * This way we can write to the store and update the UI.
-   */
+	/**
+	 * Enables callbacks for threads. Only active once preprocessing is done
+	 * and we know that threadIds will exist in the thread store.
+	 * This way we can write to the store and update the UI.
+	 */
 	const enableThreadCallbacks = (client: AssistantClient) => {
 		client.setCallbacks({
 			onProgressText(threadId: string, progressText) {
@@ -201,13 +210,20 @@
 				parameters: any
 			): Promise<string | undefined> {
 				if (name === createPersonaFunctionName) {
-					const { personaId, name, emoji, expertise, instructions } = parameters;
+					const { personaId, name, emoji, expertise, instructions, relevantNewData } = parameters;
 
-					return await handleCreatePersona(personaId, name, emoji, expertise, instructions);
+					return await handleCreatePersona(
+						personaId,
+						name,
+						emoji,
+						expertise,
+						instructions,
+						relevantNewData
+					);
 				} else if (name === sendInstructionsFunctionName) {
-					const { personaId, instructions } = parameters;
+					const { personaId, instructions, relevantNewData } = parameters;
 
-					return await handleSendInstructions(personaId, instructions);
+					return await handleSendInstructions(personaId, instructions, relevantNewData);
 				}
 
 				return undefined;
@@ -279,53 +295,61 @@
 		});
 	};
 
-  /**
-   * Enables callbacks for preprocessing. Only active during preprocessing.
-   * Needed since preprocessors don't store threads in the threadStore. Instead
-   * we write to the preprocessingJobs array, which updates the UI.
-   */
-  const enablePreprocessingCallbacks = (client: AssistantClient) => {
-    client.setCallbacks({
-      onProgressText(threadId, progressText) {
-        console.log('preprocess | onProgressText | Progress:', threadId, progressText);
-      },
-      onComplete(threadId: string) {
-        console.log('preprocess | onComplete | Preprocessing completed', threadId);
-      },
+	/**
+	 * Enables callbacks for preprocessing. Only active during preprocessing.
+	 * Needed since preprocessors don't store threads in the threadStore. Instead
+	 * we write to the preprocessingJobs array, which updates the UI.
+	 */
+	const enablePreprocessingCallbacks = (client: AssistantClient) => {
+		client.setCallbacks({
+			onProgressText(threadId, progressText) {
+				console.log('preprocess | onProgressText | Progress:', threadId, progressText);
+			},
+			onComplete(threadId: string) {
+				console.log('preprocess | onComplete | Preprocessing completed', threadId);
+			},
 
-      onError(threadId: string, error) {
-        console.error('preprocess | onError | Error running assistant:', threadId, error);
-      },
+			onError(threadId: string, error) {
+				console.error('preprocess | onError | Error running assistant:', threadId, error);
+			},
 
-      onMessageCreated(threadId: string, assistantId: string, messageId: string) {
-        const job = preprocessingPipeline?.getCurrentJob();
+			onMessageCreated(threadId: string, assistantId: string, messageId: string) {
+				const job = preprocessingPipeline?.getCurrentJob();
 
-        if (!job) {
-          console.error('preprocess | onMessageCreated | Job not found:', threadId, preprocessingJobs);
-          return;
-        }
+				if (!job) {
+					console.error(
+						'preprocess | onMessageCreated | Job not found:',
+						threadId,
+						preprocessingJobs
+					);
+					return;
+				}
 
-        job.result = '';
-        preprocessingJobs[job.index!] = job; // HACK to force update (since job was pushed later, its not reactive)
-      },
+				job.result = '';
+				preprocessingJobs[job.index!] = job; // HACK to force update (since job was pushed later, its not reactive)
+			},
 
-      onMessageDelta(threadId: string, messageId: string, delta: string) {
-        const job = preprocessingPipeline?.getCurrentJob();
+			onMessageDelta(threadId: string, messageId: string, delta: string) {
+				const job = preprocessingPipeline?.getCurrentJob();
 
-        if (!job) {
-          console.error('preprocess | onMessageDelta | Job not found:', threadId, preprocessingJobs);
-          return;
-        }
+				if (!job) {
+					console.error(
+						'preprocess | onMessageDelta | Job not found:',
+						threadId,
+						preprocessingJobs
+					);
+					return;
+				}
 
-        for (const job of preprocessingJobs) {
-          console.log('preprocess | onMessageDelta | Job:', job);
-        }
+				for (const job of preprocessingJobs) {
+					console.log('preprocess | onMessageDelta | Job:', job);
+				}
 
-        job.result = job.result + delta;
-        preprocessingJobs[job.index!] = job; // HACK to force update (since job was pushed later, its not reactive)
-      }
-    });
-  };
+				job.result = job.result + delta;
+				preprocessingJobs[job.index!] = job; // HACK to force update (since job was pushed later, its not reactive)
+			}
+		});
+	};
 
 	const start = async () => {
 		if (!client) return;
@@ -383,6 +407,12 @@
 		try {
 			for (const [threadId, thread] of threads) {
 				await client.deleteThread(threadId);
+
+        if (thread.assistantId === cachedProjectLead?.id) {
+          await forceClearCachedProjectLead(client);
+        } else {
+          await client.deleteAssistant(thread.assistantId);
+        }
 			}
 		} finally {
 			threadStore.set(new Map());
@@ -406,7 +436,11 @@
 		cachedProjectLead = null;
 
 		await forceClearThreads(client);
-		await client.deleteAssistant(assistantRemoving.id);
+		try {
+			await client.deleteAssistant(assistantRemoving.id);
+		} catch (error) {
+			console.warn('Error deleting assistant:', error);
+		}
 	};
 
 	const clearCachedProjectLead = async () => {
@@ -434,15 +468,13 @@
 		isLoading = true;
 
 		try {
-      enablePreprocessingCallbacks(client);
+			enablePreprocessingCallbacks(client);
 
-      // Sends the message through a set of AI's that preprocess the message, breaking it down into smaller parts
+			// Sends the message through a set of AI's that preprocess the message, breaking it down into smaller parts
 			const processedUserInput = await preprocessingPipeline.start(userInput);
 
 			console.log(processedUserInput);
-			if (isLoading) return; // TODO: Remove after testing
-
-		  enableThreadCallbacks(client);
+			enableThreadCallbacks(client);
 
 			const threadId = $threadStore.keys().next().value;
 
@@ -468,7 +500,7 @@
 
 				thread.messages.push({
 					id: messageId,
-					content: userInput,
+					content: processedUserInput,
 					sender: 'user',
 					timestamp: new Date().toISOString()
 				});
@@ -539,9 +571,9 @@
 							colors={job.preprocessor.color}
 							pulsing={job.status !== 'completed'}
 						>
-              <div class="overflow-auto max-h-[500px]">
-                {@html marked(job.result)}
-              </div>
+							<div class="max-h-[500px] overflow-auto">
+								{@html marked(job.result)}
+							</div>
 						</InfoBulb>
 						{#if index < preprocessingJobs.length - 1}
 							<div class="text-slate-400">&raquo;</div>

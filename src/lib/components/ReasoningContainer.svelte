@@ -1,7 +1,7 @@
 <script lang="ts">
 	import TextAreaEntry from './TextAreaEntry.svelte';
 	import Button from './Button.svelte';
-	import type { AssistantThread } from '$lib/assistants/AssistantThread';
+	import { createThreadHash, type AssistantThread } from '$lib/assistants/AssistantThread';
 	import type { AssistantClient } from '$lib/assistants/AssistantClient';
 	import GroupTitle from './Chat/GroupTitle.svelte';
 	import ChatMessage from './Chat/ChatMessage.svelte';
@@ -23,6 +23,8 @@
 	let isLoading = $state(false);
 	let showSystemPrompt = $state(false);
 	let messages = $state(thread.messages);
+	let lastScrollByUser = $state(0);
+  let lastThreadHash = $state('');
 	let scrollContainer: HTMLDivElement;
 	let progressText = $state('');
 
@@ -31,6 +33,14 @@
 		const updatedThread = $threadStore.get(thread.id);
 
 		if (updatedThread) {
+      const updatedThreadHash = createThreadHash(updatedThread);
+
+      if (lastThreadHash === updatedThreadHash){
+        return;
+      }
+
+      lastThreadHash = updatedThreadHash;
+
 			messages = thread.messages;
 			progressText = updatedThread.progressText || '';
 
@@ -42,6 +52,11 @@
 	});
 
 	const scrollToBottom = () => {
+		if (Date.now() - lastScrollByUser < 1000) {
+			// User scrolled, don't take control
+			return;
+		}
+
 		scrollContainer.scroll({
 			top: scrollContainer.scrollHeight,
 			behavior: 'smooth'
@@ -160,7 +175,11 @@
 		</div>
 	{/if}
 
-	<div class="flex flex-1 flex-col space-y-4 overflow-y-auto p-4" bind:this={scrollContainer}>
+	<div
+		class="flex flex-1 flex-col space-y-4 overflow-y-auto p-4"
+		bind:this={scrollContainer}
+		onscroll={() => (lastScrollByUser = Date.now())}
+	>
 		{#if showSystemPrompt}
 			<Heading level={3} class="text-emerald-400">System Prompt</Heading>
 			{thread.config.instructions}
