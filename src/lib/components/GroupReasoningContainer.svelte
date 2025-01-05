@@ -34,7 +34,8 @@
 	let cachedProjectLead: AssistantConfig | null = $state(null);
 	let enableCustomInstructions: boolean = $state(false);
 	let customInstructions: string = $state(projectLeadAssistant.instructions);
-	let isBlockedFromEnteringFirstPrompt: boolean = $state(false);
+  let isBusyAnswering = $state(false);
+	let isLoading: boolean = $state(false);
 	let userInput: string = $state('');
 
 	if (preprocessingPipeline) {
@@ -229,6 +230,7 @@
 
 			onComplete(threadId: string) {
 				console.log('onComplete | Run completed', threadId);
+        isLoading = false;
 			},
 
 			onError(threadId: string, error) {
@@ -397,7 +399,8 @@
 		const threads = $threadStore;
 
 		try {
-      isBlockedFromEnteringFirstPrompt = false;
+      isLoading = false;
+      isBusyAnswering = false;
 
 			for (const [threadId, thread] of threads) {
 				await client.deleteThread(threadId);
@@ -450,14 +453,15 @@
 	const sendMessage = async () => {
 		if (!client) return;
 
-		if (!userInput.trim() || isBlockedFromEnteringFirstPrompt) return;
+		if (!userInput.trim() || isLoading) return;
 
 		if (!preprocessingPipeline) {
 			console.error('Preprocessing pipeline not initialized');
 			return;
 		}
 
-		isBlockedFromEnteringFirstPrompt = true;
+		isLoading = true;
+    isBusyAnswering = true;
 
 		try {
 			enablePreprocessingCallbacks(client);
@@ -505,7 +509,8 @@
 			userInput = '';
 		} catch (error) {
 			console.error('Error sending message:', error);
-      isBlockedFromEnteringFirstPrompt = false;
+      isBusyAnswering = false;
+      isLoading = false;
     }
 	};
 </script>
@@ -529,7 +534,7 @@
 				<TextAreaEntry
 					bind:value={userInput}
 					placeholder="Type your message..."
-					disabled={isBlockedFromEnteringFirstPrompt}
+					disabled={isLoading || isBusyAnswering}
 					rows={2}
 					onkeyup={(e) => {
 						if (e.key === 'Enter' && !e.shiftKey) {
@@ -549,7 +554,7 @@
 				<Button
 					primary
 					class="self-stretch"
-					disabled={isBlockedFromEnteringFirstPrompt || !userInput.trim()}
+					disabled={isLoading || isBusyAnswering || !userInput.trim()}
 					onclick={sendMessage}>Send</Button
 				>
 			</div>
@@ -578,7 +583,7 @@
 				<ReasoningContainer
           {thread}
           {client}
-          withChat={isBlockedFromEnteringFirstPrompt && index === 0}
+          withChat={!isLoading && !isBusyAnswering && index === 0}
           />
 			{/each}
 		</Container>

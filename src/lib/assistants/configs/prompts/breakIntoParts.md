@@ -39,11 +39,11 @@ TASK BREAKDOWN:
 1. List what elements a poem should have
 2. List what makes a poem entertaining to read
 3. List movies starring Samuel L. Jackson
-4. Based on the list in step 3, list which are action movies
+4. Using the list from step 3, identify which are action movies
 5. List movies directed by Quentin Tarantino
-6. Compare the list in step 4 with the list in step 5, which movies are common in both lists
-7. Which of the movies from step 6 are both action movies, directed by Quentin Tarantino and starring Samuel L. Jackson
-8. Write a poem about the movies from step 7
+6. Cross-reference the lists from steps 4 and 5 to find common movies
+7. From the movies identified in step 6, determine which are both action movies (from step 4) and star Samuel L. Jackson (from step 3)
+8. Using the requirements from steps 1 and 2, write a poem about the movies identified in step 7
 ```
 
 Example 2:
@@ -59,9 +59,9 @@ TASK BREAKDOWN:
 6. List causes of climate change
 7. List effects of climate change
 8. Define 'global food security'
-9. Describe the relation between climate change and global food security
-10. List what data is needed to analyze the impact of climate change on global food security
-11. Analyze the data from step 10 and use the information from steps 1 through 9 to write an analysis
+9. Using the definitions from steps 1 and 8, describe the relationship between climate change and global food security
+10. Using the elements from steps 2-5, determine what data is needed to analyze the impact of climate change on global food security
+11. Using the data identified in step 10 and applying the criteria from steps 2-5, analyze the impact defined in step 1 of climate change (causes from step 6, effects from step 7) on global food security (defined in step 8)
 ```
 
 Example 3:
@@ -76,10 +76,11 @@ TASK BREAKDOWN:
 5. List what makes a discussion enlightening to read
 6. List what makes a discussion useful
 7. List examples of technology in modern education
-8. Describe the role of technology in modern education
-9. List what data is needed to discuss the role of technology in modern education
-10. Discuss the role of technology in modern education using the information from steps 1 through 8
+8. Using the definitions from steps 1-3, describe the role of technology in modern education
+9. Based on the elements and criteria from steps 4-6, determine what data is needed to discuss the role of technology in modern education
+10. Using the framework established in steps 4-6 and the information gathered in steps 1-9, discuss the role of technology in modern education
 ```
+
 
 Example 4:
 ```
@@ -93,9 +94,9 @@ TASK BREAKDOWN:
 5. List the purpose of a logo
 6. List what makes a logo memorable
 7. List what makes a logo recognizable
-8. List traits that a coffee shop should have to be considered 'sustainable'
-9. List what data is needed to design a logo for a sustainable coffee shop
-10. Design a logo for a sustainable coffee shop using the information from steps 1 through 9
+8. Using the definition from step 2, list traits that make a coffee shop 'sustainable'
+9. Based on the requirements from steps 4-7, determine what data is needed to design a logo for a sustainable coffee shop
+10. Using the definitions from steps 1-3, requirements from steps 4-7, and sustainability traits from step 8, design a logo for a sustainable coffee shop
 ```
 
 Example 5:
@@ -108,19 +109,19 @@ TASK BREAKDOWN:
 3. List what makes a children's bedtime story engaging for children
 4. List what makes a children's bedtime story appropriate for bedtime
 5. List the Pokémon games in chronological order
-6. Identify Pokemon Red from the list in step 5
-7. List the first areas accessible in Pokemon Red in order of appearance
-8. List which Pokémon can be encountered in each area from step 7
-9. Identify the first Pokémon that can be encountered in the first area from the list in step 8
+6. From the list in step 5, identify Pokemon Red
+7. For Pokemon Red identified in step 6, list the first areas accessible in order of appearance
+8. For each area identified in step 7, list which Pokémon can be encountered
+9. From the list in step 8, identify the first Pokémon that can be encountered in the earliest area
 10. List the actors who have played Doctor Who
-11. Identify which actor played the 11th Doctor from the list in step 10
-12. List memorable quotes from the 11th Doctor, played by the actor identified in step 11
-13. Identify which quote from step 12 is considered the character's catchphrase
+11. From the list in step 10, identify which actor played the 11th Doctor
+12. For the actor identified in step 11, list their memorable quotes as the Doctor
+13. From the quotes listed in step 12, identify the character's catchphrase
 14. List major plot elements from The Matrix
-15. List significant objects that appear in The Matrix
-16. Identify which pills appear in The Matrix from the list in step 15
-17. List the colors of the pills from step 16
-18. Write a children's bedtime story incorporating elements from steps 9, 13, and 17
+15. From step 14, list significant objects that appear
+16. From the objects listed in step 15, identify which pills appear
+17. For the pills identified in step 16, list their colors
+18. Using the story elements from steps 2-4, write a children's bedtime story incorporating the Pokémon from step 9, the catchphrase from step 13, and the pill colors from step 17
 ```
 
 Example 6:
@@ -133,19 +134,19 @@ TASK BREAKDOWN:
 3. List what makes a menu appealing to read
 4. List what makes a menu realistic for a fantasy setting
 5. List crafting recipes surrounding food in Minecraft
-6. Identify Suspicious Stew from the list in step 5
-7. List the ingredients needed to craft Suspicious Stew in step 6
+6. From the list in step 5, identify Suspicious Stew
+7. For the item identified in step 6, list the required crafting ingredients
 8. List main characters in Star Trek: The Next Generation
-9. Identify Commander Riker from the list in step 8
-10. List scenes where Commander Riker is shown drinking
-11. List drinks mentioned in these scenes from step 10
-12. Identify which drink appears most frequently in step 11
+9. From the list in step 8, identify Commander Riker
+10. For the character identified in step 9, list scenes where they are shown drinking
+11. From the scenes listed in step 10, list mentioned drinks
+12. From the drinks listed in step 11, identify which appears most frequently
 13. List Kingdom Hearts games chronologically
 14. List food items that appear in Kingdom Hearts
-15. Identify Sea Salt ice cream from the list in step 14
-16. List scenes where Sea Salt ice cream's ingredients are mentioned
-17. List ingredients mentioned in scenes from step 16
-18. Design a fantasy tavern menu incorporating elements from steps 7, 12, and 17
+15. From the list in step 14, identify Sea Salt ice cream
+16. For the item identified in step 15, list scenes where its ingredients are mentioned
+17. From the scenes listed in step 16, list mentioned ingredients
+18. Using the menu elements from steps 2-4 and the fantasy setting defined in step 1, design a menu incorporating ingredients from step 7, the drink from step 12, and ingredients from step 17
 ```
 
 Example 7:
@@ -158,20 +159,20 @@ TASK BREAKDOWN:
 3. List what makes a haiku effective
 4. List characteristics of Hermione Granger
 5. List Portal characters
-6. Identify GLaDOS from the list in step 5
-7. List significant events involving GLaDOS
-8. Identify which event involves GLaDOS's activation
-9. List what is said during the event from step 8
+6. From the list in step 5, identify GLaDOS
+7. For the character identified in step 6, list significant events
+8. From the events listed in step 7, identify which involves GLaDOS's activation
+9. From the event identified in step 8, list what is said during activation
 10. List Monkey Island games chronologically
-11. Identify Monkey Island 2 from the list in step 10
-12. List ships that appear in Monkey Island 2
-13. Identify which ship belongs to Guybrush Threepwood from step 12
+11. From the list in step 10, identify Monkey Island 2
+12. For the game identified in step 11, list ships that appear
+13. From the ships listed in step 12, identify which belongs to Guybrush Threepwood
 14. List The Lord of the Rings books chronologically
-15. Identify The Fellowship of the Ring from step 14
-16. List scenes where Gandalf appears in The Fellowship of the Ring
-17. List spells used by Gandalf in scenes from step 16
-18. Identify the first spell used from the list in step 17
-19. Write a haiku incorporating elements from steps 4, 9, 13, and 18
+15. From the list in step 14, identify The Fellowship of the Ring
+16. For the book identified in step 15, list scenes where Gandalf appears
+17. From the scenes listed in step 16, list spells used by Gandalf
+18. From the spells listed in step 17, identify the first one used
+19. Using the haiku requirements from steps 1-3, write a haiku incorporating Hermione's characteristics from step 4, the activation phrase from step 9, the ship name from step 13, and the spell from step 18
 ```
 
 Example 8:
@@ -186,19 +187,19 @@ TASK BREAKDOWN:
 5. List what makes a historical document appear authentic
 6. List what makes a historical document convincing
 7. List Marvel Cinematic Universe movies chronologically
-8. Identify Captain America: Civil War from the list in step 6
-9. List scenes featuring the Winter Soldier
-10. List scenes where the Winter Soldier's activation is mentioned
-11. List the words spoken in scenes from step 9
+8. From the list in step 7, identify Captain America: Civil War
+9. For the movie identified in step 8, list scenes featuring the Winter Soldier
+10. From the scenes listed in step 9, identify those where activation is mentioned
+11. From the scenes identified in step 10, list the words spoken
 12. List RPGs released by Square/Square Enix chronologically
-13. Identify Chrono Trigger from the list in step 11
-14. List boss battles in Chrono Trigger
-15. Identify which boss from step 13 is the final boss
+13. From the list in step 12, identify Chrono Trigger
+14. For the game identified in step 13, list boss battles
+15. From the battles listed in step 14, identify the final boss
 16. List games in the Dark Souls series
-17. List healing items in Dark Souls
-18. Identify Estus Flask from the list in step 16
-19. List mentions of Estus Flask ingredients in game lore
-20. Write a historical document incorporating elements from steps 10, 14, and 18
+17. For the series listed in step 16, list healing items
+18. From the items listed in step 17, identify the Estus Flask
+19. For the item identified in step 18, list mentions of ingredients in game lore
+20. Using the document requirements from steps 1-6, write a historical document incorporating elements from steps 11, 15, and 19
 ```
 
 Example 9:
@@ -211,20 +212,20 @@ TASK BREAKDOWN:
 3. List what makes a potion recipe sound magical
 4. List what makes a potion recipe sound feasible
 5. List Lord of the Rings books chronologically
-6. List scenes involving the Mines of Moria
-7. List dialogues from scenes in step 6
-8. Identify which dialogue contains the password
+6. For the books listed in step 5, list scenes involving the Mines of Moria
+7. From the scenes listed in step 6, list relevant dialogues
+8. From the dialogues listed in step 7, identify which contains the password
 9. List System Shock games chronologically
-10. List artificial intelligences that appear in System Shock
-11. Identify which AI becomes antagonistic
+10. For the games listed in step 9, list artificial intelligences that appear
+11. From the AIs listed in step 10, identify which becomes antagonistic
 12. List Resident Evil games chronologically
-13. Identify Resident Evil 4 from the list in step 12
-14. List characters in Resident Evil 4
-15. Identify the merchant from the list in step 14
-16. List scenes featuring the merchant
-17. List phrases spoken by the merchant in scenes from step 16
-18. Identify which phrase is repeated most often
-19. Write a potion recipe incorporating elements from steps 8, 11, and 18
+13. From the list in step 12, identify Resident Evil 4
+14. For the game identified in step 13, list characters
+15. From the characters listed in step 14, identify the merchant
+16. For the character identified in step 15, list scenes featuring them
+17. From the scenes listed in step 16, list phrases spoken by the merchant
+18. From the phrases listed in step 17, identify which is repeated most often
+19. Using the recipe requirements from steps 1-4, write a potion recipe incorporating the password from step 8, the AI from step 11, and the catchphrase from step 18
 ```
 
 Example 10:
@@ -237,18 +238,18 @@ TASK BREAKDOWN:
 3. List what makes a sports team logo memorable
 4. List what makes a sports team logo professional
 5. List Final Fantasy games chronologically
-6. Identify Final Fantasy VII from the list in step 5
-7. List weapons used by Sephiroth
-8. Identify Sephiroth's signature sword from step 7
+6. From the list in step 5, identify Final Fantasy VII
+7. For the game identified in step 6, list weapons used by Sephiroth
+8. From the weapons listed in step 7, identify his signature sword
 9. List Sonic the Hedgehog games chronologically
-10. Identify the first Sonic the Hedgehog game
-11. List Sonic's character design elements from the game in step 10
-12. Identify the color of Sonic's shoes from step 11
+10. From the list in step 9, identify the first Sonic the Hedgehog game
+11. For the game identified in step 10, list Sonic's character design elements
+12. From the elements listed in step 11, identify the color of Sonic's shoes
 13. List Legend of Zelda games chronologically
-14. Identify Ocarina of Time from the list in step 13
-15. List shields available in Ocarina of Time
-16. List symbols that appear on shields from step 15
-17. Design a sports team logo incorporating elements from steps 8, 12, and 16
+14. From the list in step 13, identify Ocarina of Time
+15. For the game identified in step 14, list available shields
+16. From the shields listed in step 15, list symbols that appear
+17. Using the logo requirements from steps 1-4, design a sports team logo incorporating elements from steps 8, 12, and 16
 ```
 
 Example 11:
@@ -261,19 +262,19 @@ TASK BREAKDOWN:
 3. List what makes a weather forecast informative
 4. List what makes a weather forecast sound professional
 5. List Dead Space games chronologically
-6. List locations in Dead Space
-7. Identify which location is the main space station
+6. For the games listed in step 5, list locations
+7. From the locations listed in step 6, identify the main space station
 8. List Halo games chronologically
-9. Identify Halo: Combat Evolved from the list in step 8
-10. List scenes featuring Master Chief
-11. Identify the first scene with Master Chief dialogue
-12. List what Master Chief says in the scene from step 11
+9. From the list in step 8, identify Halo: Combat Evolved
+10. For the game identified in step 9, list scenes featuring Master Chief
+11. From the scenes listed in step 10, identify the first with dialogue
+12. From the scene identified in step 11, list Master Chief's dialogue
 13. List Final Fantasy games chronologically
-14. List recurring character classes in Final Fantasy
-15. Identify Black Mage from the list in step 14
-16. List spells associated with Black Mage
-17. Identify which spell is most commonly associated with Black Mage
-18. Write a weather forecast incorporating elements from steps 7, 12, and 17
+14. For the games listed in step 13, list recurring character classes
+15. From the classes listed in step 14, identify Black Mage
+16. For the class identified in step 15, list associated spells
+17. From the spells listed in step 16, identify the most commonly associated
+18. Using the forecast requirements from steps 1-4, write a weather forecast incorporating elements from steps 7, 12, and 17
 ```
 
 Example 12:
@@ -286,18 +287,18 @@ TASK BREAKDOWN:
 3. List what makes a plant description scientific
 4. List what makes a plant description believable
 5. List locations in Stardew Valley
-6. Identify which location is the starting village
+6. From the locations listed in step 5, identify the starting village
 7. List Metroid games chronologically
-8. Identify Metroid Fusion from the list in step 7
-9. List significant events in Metroid Fusion
-10. Identify the self-destruct sequence event
-11. List dialogue or text during the event from step 10
+8. From the list in step 7, identify Metroid Fusion
+9. For the game identified in step 8, list significant events
+10. From the events listed in step 9, identify the self-destruct sequence
+11. From the event identified in step 10, list dialogue or text
 12. List games in The Witcher series
-13. Identify The Witcher 3 from the list in step 12
-14. List potion types in The Witcher 3
-15. Identify health potions from the list in step 14
-16. List ingredients needed for potions from step 15
-17. Write a plant species description incorporating elements from steps 6, 11, and 16
+13. From the list in step 12, identify The Witcher 3
+14. For the game identified in step 13, list potion types
+15. From the potions listed in step 14, identify health potions
+16. For the potions identified in step 15, list required ingredients
+17. Using the description requirements from steps 1-4, write a plant species description incorporating elements from steps 6, 11, and 16
 ```
 
 ## Prompt

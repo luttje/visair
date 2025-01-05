@@ -44,10 +44,10 @@
 
 <header class="container mx-auto max-w-7xl">
 	<div class="flex items-center justify-between p-8">
-		<div class="flex flex-row items-center gap-2">
+		<a class="flex flex-row items-center gap-2" href="/">
       <img src={glass_orb} alt="VisAIR" class="size-12 md:size-16" />
-			<Heading level={1}>VisAIR</Heading>
-		</div>
+      <Heading level={1}>VisAIR</Heading>
+		</a>
     <div class="flex flex-row items-center gap-4">
 			{#if user}
 				<div class="hidden md:flex flex-row items-center gap-4">
