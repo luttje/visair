@@ -111,6 +111,8 @@
 			content: newInstructions
 		});
 
+    console.log('Created thread for persona', personaId, threadId, messageId, newInstructions);
+
 		threadStore.update((store) => {
 			const thread = store.get(threadId);
 
@@ -404,10 +406,12 @@
 
 			for (const [threadId, thread] of threads) {
 				await client.deleteThread(threadId);
+
+        if (thread.assistantId === cachedProjectLead?.id)
+          continue;
+
         await client.deleteAssistant(thread.assistantId);
 			}
-
-      cachedProjectLead = null;
 		} finally {
 			threadStore.set(new Map());
 		}
@@ -417,7 +421,9 @@
 		if (!client) return;
 
 		if (confirm('Are you sure you want to remove all threads? This cannot be undone.')) {
+      isLoading = true;
 			forceClearThreads(client);
+      isLoading = false;
 		}
 	};
 
@@ -446,7 +452,9 @@
 				'Are you sure you want to remove the cached project lead assistant? This will also remove all threads and cannot be undone.'
 			)
 		) {
+      isLoading = true;
 			await forceClearCachedProjectLead(client);
+      isLoading = false;
 		}
 	};
 
@@ -583,7 +591,7 @@
 				<ReasoningContainer
           {thread}
           {client}
-          withChat={!isLoading && !isBusyAnswering && index === 0}
+          withChat={!isLoading && isBusyAnswering && index === 0}
           />
 			{/each}
 		</Container>
@@ -632,10 +640,10 @@
 	<Label>Actions</Label>
 	{#if client}
 		{#if $threadStore.size > 0}
-			<Button onclick={clearThreads}>Remove All Threads</Button>
+			<Button onclick={clearThreads} disabled={isLoading}>Remove All Threads</Button>
 		{/if}
 		{#if cachedProjectLead}
-			<Button onclick={clearCachedProjectLead}>Clear Cached Project Leader Assistant</Button>
+			<Button onclick={clearCachedProjectLead} disabled={isLoading}>Clear Cached Project Leader Assistant</Button>
 		{/if}
 	{/if}
 </div>

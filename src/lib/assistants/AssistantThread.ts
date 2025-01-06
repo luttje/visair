@@ -21,5 +21,5 @@ export function createThreadHash(thread: AssistantThread) {
     lastMessageLength = lastMessage.content.length
   }
 
-  return `${thread.id}:${thread.assistantId}:${thread.messages.length}:${lastMessageLength}`;
+  return `${thread.id}:${thread.assistantId}:${thread.progressText}:${thread.messages.length}:${lastMessageLength}`;
 }
