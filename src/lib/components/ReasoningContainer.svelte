@@ -11,6 +11,7 @@
 	import ProgressText from './ProgressText.svelte';
 	import Heading from './Heading.svelte';
 	import { marked } from 'marked';
+	import Entry from './Entry.svelte';
 
 	type Props = {
 		thread: AssistantThread;
@@ -24,6 +25,7 @@
 	let isLoading = $state(false);
 	let showDebugInfo = $state(false);
   let showDebugInfoTab = $state('system-prompt');
+  let debugActionRunId = $state('');
 	let messages = $state(thread.messages);
 	let lastScrollByUser = $state(0);
   let lastThreadHash = $state('');
@@ -206,7 +208,14 @@
         {:else if showDebugInfoTab === 'debug-actions'}
           <Heading level={3} class="text-emerald-400">Debug Actions</Heading>
           <div>
-            <Button onclick={() => console.log(client.getMessages(thread.id))}>Log Messages to Console</Button>
+            <Button onclick={() => console.log(client.getMessages(thread.id))}>Log Thread Messages to Console</Button>
+          </div>
+          <div>
+            <Button onclick={() => console.log(client.getRuns(thread.id))}>Log Thread Runs to Console</Button>
+          </div>
+          <div>
+            <Entry title="Run ID" bind:value={debugActionRunId} />
+            <Button onclick={() => console.log(client.getRunSteps(thread.id, debugActionRunId))}>Log Run Steps to Console</Button>
           </div>
         {/if}
       </div>

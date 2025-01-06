@@ -170,6 +170,32 @@ export class AssistantClient {
   }
 
   /**
+   * Lists all runs in a thread
+   */
+  async getRuns(threadId: string) {
+    const response = await this.fetch(`/threads/${threadId}/runs`);
+
+    const result = await response.json();
+
+    console.log('getRuns response', result);
+
+    return result;
+  }
+
+  /**
+   * List run steps
+   */
+  async getRunSteps(threadId: string, runId: string) {
+    const response = await this.fetch(`/threads/${threadId}/runs/${runId}/steps`);
+
+    const result = await response.json();
+
+    console.log('getSteps response', result);
+
+    return result;
+  }
+
+  /**
    * Streams a run, calling the provided callbacks.
    * Be sure to have added messages to the thread before calling this.
    */
