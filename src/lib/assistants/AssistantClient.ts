@@ -6,6 +6,7 @@ import type { ToolResult } from "./Tools";
 export type StreamCallbacks = {
   onProgressText?: (threadId: string, progressText: string) => void;
   onHandleToolCall?: (threadId: string, name: string, parameters: any) => Promise<string | undefined>;
+  onPostHandleToolCall?: (threadId: string, toolNamesCalled: string[]) => Promise<void>;
   onMessageCreated?: (threadId: string, assistantId: string, messageId: string) => void;
   onMessageDelta?: (threadId: string, messageId: string, delta: string) => void;
   onError?: (threadId: string, error: Error) => void;
@@ -88,6 +89,28 @@ export class AssistantClient {
     const result = await response.json();
 
     return result.id as string;
+  }
+
+  /**
+   * Modifies the tools of an assistant
+   */
+  async updateAssistantTools(assistantId: string, tools: any[]) {
+    await this.checkLimit();
+
+    const data = {
+      tools,
+    };
+
+    const response = await this.fetch(`/assistants/${assistantId}`, {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to update assistant tools: ${response.statusText}`);
+    }
+
+    console.log('updateAssistantTools response', response);
   }
 
   /**
@@ -312,6 +335,7 @@ export class AssistantClient {
           return;
         }
 
+        const toolNamesCalled = [] as string[];
         const toolOutputs: ToolResult[] = await Promise.all(data.required_action.submit_tool_outputs.tool_calls.map(async (toolCall: any) => {
           if (toolCall.type !== 'function') {
             console.warn('Unexpected tool call type:', toolCall.type);
@@ -321,6 +345,8 @@ export class AssistantClient {
           const name = toolCall.function.name;
           const parameters = JSON.parse(toolCall.function.arguments);
           const result = await this.callbacks.onHandleToolCall!(threadId, name, parameters);
+
+          toolNamesCalled.push(name);
 
           if (result === undefined) {
             console.error('Unhandled tool call:', toolCall);
@@ -332,6 +358,10 @@ export class AssistantClient {
             output: result,
           };
         }));
+
+        if (this.callbacks.onPostHandleToolCall) {
+          await this.callbacks.onPostHandleToolCall(threadId, toolNamesCalled);
+        }
 
         this.callbacks.onProgressText?.(threadId, 'Submiting tool outputs...');
 

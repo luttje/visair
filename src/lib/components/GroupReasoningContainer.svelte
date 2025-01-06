@@ -9,8 +9,8 @@
 		createPersonaFunctionName,
 		projectLeadAssistant,
 		sendInstructionsFunctionName,
-    retrieveTaskInfoName,
-    storeTaskInfoName,
+		retrieveTaskInfoName,
+		storeTaskInfoName
 	} from '$lib/assistants/configs/projectLeadAssistant';
 	import Button from './Button.svelte';
 	import Container from './Container.svelte';
@@ -25,6 +25,7 @@
 	import { preprocessors } from '$lib/assistants/configs/preprocessors';
 	import { marked } from 'marked';
 	import { applyInputWrapper, testProcessedUserInput, testUserInput } from '$lib/Utilities';
+	import type { ToolsConfig } from '$lib/assistants/Tools';
 
 	type Props = {};
 
@@ -37,7 +38,7 @@
 	let cachedProjectLead: AssistantConfig | null = $state(null);
 	let enableCustomInstructions: boolean = $state(false);
 	let customInstructions: string = $state(projectLeadAssistant.instructions);
-  let isBusyAnswering = $state(false);
+	let isBusyAnswering = $state(false);
 	let isLoading: boolean = $state(false);
 	let userInput: string = $state('');
 
@@ -114,7 +115,7 @@
 			content: newInstructions
 		});
 
-    console.log('Created thread for persona', personaId, threadId, messageId, newInstructions);
+		console.log('Created thread for persona', personaId, threadId, messageId, newInstructions);
 
 		threadStore.update((store) => {
 			const thread = store.get(threadId);
@@ -187,13 +188,13 @@
 		return textResult;
 	};
 
-  // TODO: See if this is any good for maintaining task info
-  type PersonaId = string;
-  type TaskInfo = {
-    description: string;
-    data: string;
-  };
-  const personaTaskInfo = new Map<PersonaId, TaskInfo>();
+	// TODO: See if this is any good for maintaining task info
+	type PersonaId = string;
+	type TaskInfo = {
+		description: string;
+		data: string;
+	};
+	const personaTaskInfo = new Map<PersonaId, TaskInfo>();
 
 	/**
 	 * Enables callbacks for threads. Only active once preprocessing is done
@@ -237,40 +238,92 @@
 
 					return await handleSendInstructions(personaId, instructions, relevantNewData);
 				} else if (name === storeTaskInfoName) {
-          const { personaId, description, relevantNewData } = parameters;
+					const { personaId, description, relevantNewData } = parameters;
 
-          personaTaskInfo.set(personaId, {
-            description,
-            data: relevantNewData
-          });
+					personaTaskInfo.set(personaId, {
+						description,
+						data: relevantNewData
+					});
 
-          console.log('Stored task info for personaId:', personaId, personaTaskInfo);
+					console.log('Stored task info for personaId:', personaId, personaTaskInfo);
 
-          return 'Task info stored successfully.';
-        } else if (name === retrieveTaskInfoName) {
-          const { personaId } = parameters;
+					return 'Task info stored successfully.';
+				} else if (name === retrieveTaskInfoName) {
+					const { personaId } = parameters;
 
-          const taskInfo = personaTaskInfo.get(personaId);
+					const taskInfo = personaTaskInfo.get(personaId);
 
-          if (!taskInfo) {
-            console.warn('Task info not found for personaId:', personaId, personaTaskInfo);
-            return 'No task info found with the given personaId. Ask them specifically for what you need using the ' + sendInstructionsFunctionName + ' function.';
-          }
+					if (!taskInfo) {
+						console.warn('Task info not found for personaId:', personaId, personaTaskInfo);
+						return (
+							'No task info found with the given personaId. Ask them specifically for what you need using the ' +
+							sendInstructionsFunctionName +
+							' function.'
+						);
+					}
 
-          console.log('Retrieved task info for personaId:', personaId, taskInfo);
+					console.log('Retrieved task info for personaId:', personaId, taskInfo);
 
-          return taskInfo.data;
-        }
+					return taskInfo.data;
+				}
 
 				return undefined;
+			},
+
+			async onPostHandleToolCall(threadId: string, toolNamesCalled: string[]) {
+				if (!toolNamesCalled.includes(createPersonaFunctionName)) {
+					return;
+				}
+
+				// If persona(s) were created, update the assistant tools to include the new personaId
+				// as an enum option for the personaId parameter of functions with that parameter
+				const currentProjectLeadAssistant = $threadStore.values().next().value;
+
+				if (!currentProjectLeadAssistant) {
+					console.error('Project lead assistant not found:', $threadStore);
+					throw new Error('Project lead assistant not found');
+				}
+
+				if (!projectLeadAssistant.tools) {
+					console.error('Project lead assistant tools not found:', projectLeadAssistant);
+					throw new Error('Project lead assistant tools not found');
+				}
+
+				const newAssistantTools = [...projectLeadAssistant.tools] as ToolsConfig[];
+
+				const allPersonaIds = Array.from(
+					$threadStore
+						.values()
+						.map((thread) => thread.config.personaId)
+						.filter((personaId) => personaId !== undefined)
+				) as string[];
+
+				// Set the persona Id as an enum option for these functions to prevent the assistant from hallucinating/forgetting ids
+				for (const tool of newAssistantTools) {
+					if (
+						tool.function.parameters &&
+						tool.function.parameters.properties &&
+						tool.function.parameters.properties.personaId
+					) {
+						tool.function.parameters.properties.personaId = {
+							type: 'string',
+							description: 'The persona ID to send the instructions to',
+							enum: allPersonaIds
+						};
+					}
+				}
+
+				await client.updateAssistantTools(
+					currentProjectLeadAssistant.assistantId,
+					newAssistantTools
+				);
 			},
 
 			onComplete(threadId: string) {
 				console.log('onComplete | Run completed', threadId);
 
-        // Stop loading if this is the first thread
-        if ($threadStore.values().next().value?.id === threadId)
-          isLoading = false;
+				// Stop loading if this is the first thread
+				if ($threadStore.keys().next().value === threadId) isLoading = false;
 			},
 
 			onError(threadId: string, error) {
@@ -341,8 +394,7 @@
 	 */
 	const enablePreprocessingCallbacks = (client: AssistantClient) => {
 		client.setCallbacks({
-			onProgressText(threadId, progressText) {
-			},
+			onProgressText(threadId, progressText) {},
 			onComplete(threadId: string) {
 				console.log('preprocess | onComplete | Preprocessing completed', threadId);
 			},
@@ -388,7 +440,7 @@
 	const start = async () => {
 		if (!client) return;
 
-    isLoading = true;
+		isLoading = true;
 
 		// Force clean if custom instructions are enabled, so that the new assistant can be created
 		if (enableCustomInstructions && cachedProjectLead) {
@@ -436,23 +488,22 @@
 			messages: []
 		});
 
-    isLoading = false;
+		isLoading = false;
 	};
 
 	const forceClearThreads = async (client: AssistantClient) => {
 		const threads = $threadStore;
 
 		try {
-      isLoading = false;
-      isBusyAnswering = false;
+			isLoading = false;
+			isBusyAnswering = false;
 
 			for (const [threadId, thread] of threads) {
 				await client.deleteThread(threadId);
 
-        if (thread.assistantId === cachedProjectLead?.id)
-          continue;
+				if (thread.assistantId === cachedProjectLead?.id) continue;
 
-        await client.deleteAssistant(thread.assistantId);
+				await client.deleteAssistant(thread.assistantId);
 			}
 		} finally {
 			threadStore.set(new Map());
@@ -463,9 +514,9 @@
 		if (!client) return;
 
 		if (confirm('Are you sure you want to remove all threads? This cannot be undone.')) {
-      isLoading = true;
+			isLoading = true;
 			forceClearThreads(client);
-      isLoading = false;
+			isLoading = false;
 		}
 	};
 
@@ -494,9 +545,9 @@
 				'Are you sure you want to remove the cached project lead assistant? This will also remove all threads and cannot be undone.'
 			)
 		) {
-      isLoading = true;
+			isLoading = true;
 			await forceClearCachedProjectLead(client);
-      isLoading = false;
+			isLoading = false;
 		}
 	};
 
@@ -511,19 +562,19 @@
 		}
 
 		isLoading = true;
-    isBusyAnswering = true;
+		isBusyAnswering = true;
 
 		try {
 			enablePreprocessingCallbacks(client);
 
-      let processedUserInput: string;
+			let processedUserInput: string;
 
-      if (userInput !== 'test') {
-			  // Sends the message through a set of AI's that preprocess the message, breaking it down into smaller parts
-			  processedUserInput = await preprocessingPipeline.start(userInput);
-      } else {
-        processedUserInput = testProcessedUserInput; // for quick testing
-      }
+			if (userInput !== 'test') {
+				// Sends the message through a set of AI's that preprocess the message, breaking it down into smaller parts
+				processedUserInput = await preprocessingPipeline.start(userInput);
+			} else {
+				processedUserInput = testProcessedUserInput; // for quick testing
+			}
 
 			console.log(processedUserInput);
 			enableThreadCallbacks(client);
@@ -565,9 +616,9 @@
 			userInput = '';
 		} catch (error) {
 			console.error('Error sending message:', error);
-      isBusyAnswering = false;
-      isLoading = false;
-    }
+			isBusyAnswering = false;
+			isLoading = false;
+		}
 	};
 </script>
 
@@ -617,7 +668,7 @@
 							colors={job.preprocessor.color}
 							pulsing={job.status !== 'completed'}
 						>
-							<div class="max-h-[500px] overflow-auto marked-container">
+							<div class="marked-container max-h-[500px] overflow-auto">
 								{@html marked(job.result)}
 							</div>
 						</InfoBulb>
@@ -631,10 +682,10 @@
 		<Container class={['flex', 'flex-row', 'flex-wrap', 'gap-4'].join(' ')}>
 			{#each $threadStore as [threadId, thread], index (threadId)}
 				<ReasoningContainer
-          {thread}
-          {client}
-          withChat={!isLoading && isBusyAnswering && index === 0}
-          />
+					{thread}
+					{client}
+					withChat={!isLoading && isBusyAnswering && index === 0}
+				/>
 			{/each}
 		</Container>
 	</div>
@@ -685,7 +736,9 @@
 			<Button onclick={clearThreads} bind:disabled={isLoading}>Remove All Threads</Button>
 		{/if}
 		{#if cachedProjectLead}
-			<Button onclick={clearCachedProjectLead} bind:disabled={isLoading}>Clear Cached Project Leader Assistant</Button>
+			<Button onclick={clearCachedProjectLead} bind:disabled={isLoading}
+				>Clear Cached Project Leader Assistant</Button
+			>
 		{/if}
 	{/if}
 </div>
