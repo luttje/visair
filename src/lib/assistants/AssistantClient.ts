@@ -5,6 +5,7 @@ import type { ToolResult } from "./Tools";
 
 export type StreamCallbacks = {
   onProgressText?: (threadId: string, progressText: string) => void;
+  onPreHandleToolCall?: (threadId: string, toolNamesOrdered: string[]) => Promise<void>;
   onHandleToolCall?: (threadId: string, name: string, parameters: any) => Promise<string | undefined>;
   onPostHandleToolCall?: (threadId: string, toolNamesCalled: string[]) => Promise<void>;
   onMessageCreated?: (threadId: string, assistantId: string, messageId: string) => void;
@@ -335,32 +336,50 @@ export class AssistantClient {
           return;
         }
 
-        const toolNamesCalled = [] as string[];
-        const toolOutputs: ToolResult[] = await Promise.all(data.required_action.submit_tool_outputs.tool_calls.map(async (toolCall: any) => {
-          if (toolCall.type !== 'function') {
-            console.warn('Unexpected tool call type:', toolCall.type);
-            return 'unknown';
+        const toolNamesOrdered: string[] = data.required_action.submit_tool_outputs.tool_calls.map((toolCall: any) => toolCall.function.name);
+
+        if (this.callbacks.onPreHandleToolCall) {
+          // Allow reordering of toolNamesOrdered, so for example createPersona can be the first tool called (so that subsequent tools can use the persona)
+          await this.callbacks.onPreHandleToolCall(threadId, toolNamesOrdered);
+        }
+
+        const toolOutputs: ToolResult[] = [];
+        for (const toolName of toolNamesOrdered) {
+          // Find a toolcall with the name that is not already in the toolOutputs
+          const toolCall = data.required_action.submit_tool_outputs.tool_calls
+            .find((tc: any) => tc.function.name === toolName
+              && !toolOutputs.find((to) => to.tool_call_id === tc.id));
+
+          if (!toolCall) {
+            console.error('Tool call not found:', toolName);
+            throw new Error(`Tool call not found: ${toolName}`);
           }
 
-          const name = toolCall.function.name;
-          const parameters = JSON.parse(toolCall.function.arguments);
-          const result = await this.callbacks.onHandleToolCall!(threadId, name, parameters);
+          if (toolCall.type !== 'function') {
+            console.warn('Unexpected tool call type:', toolCall.type);
+            toolOutputs.push({
+              tool_call_id: toolCall.id,
+              output: 'unknown',
+            });
+            continue;
+          }
 
-          toolNamesCalled.push(name);
+          const parameters = JSON.parse(toolCall.function.arguments);
+          const result = await this.callbacks.onHandleToolCall(threadId, toolName, parameters);
 
           if (result === undefined) {
             console.error('Unhandled tool call:', toolCall);
-            throw new Error(`Unhandled tool call: ${name}`);
+            throw new Error(`Unhandled tool call: ${toolName}`);
           }
 
-          return {
+          toolOutputs.push({
             tool_call_id: toolCall.id,
             output: result,
-          };
-        }));
+          });
+        }
 
         if (this.callbacks.onPostHandleToolCall) {
-          await this.callbacks.onPostHandleToolCall(threadId, toolNamesCalled);
+          await this.callbacks.onPostHandleToolCall(threadId, toolNamesOrdered);
         }
 
         this.callbacks.onProgressText?.(threadId, 'Submiting tool outputs...');

@@ -40,7 +40,7 @@ export const preprocessors: PreprocessingProcessor[] = [
    * This second preprocessor organizes the sub-steps of th previous preprocessor into expert groups.
    */
   {
-    name: 'Organize for Experts',
+    name: 'Organize into Experts',
     color: { text: 'text-blue-400', background: 'bg-blue-400' },
     instructions: promptOrganizeForExperts,
     process: async function (client: AssistantClient, promptResult: string | undefined, originalPrompt: string) {

@@ -24,11 +24,12 @@
 	let userInput = $state('');
 	let isLoading = $state(false);
 	let showDebugInfo = $state(false);
-  let showDebugInfoTab = $state('system-prompt');
-  let debugActionRunId = $state('');
+	let showDebugInfoTab = $state('system-prompt');
+	let debugActionRunId = $state('');
 	let messages = $state(thread.messages);
+	let isScrollingProgrammatically = $state(false);
 	let lastScrollByUser = $state(0);
-  let lastThreadHash = $state('');
+	let lastThreadHash = $state('');
 	let scrollContainer: HTMLDivElement;
 	let progressText = $state('');
 
@@ -37,13 +38,13 @@
 		const updatedThread = $threadStore.get(thread.id);
 
 		if (updatedThread) {
-      const updatedThreadHash = createThreadHash(updatedThread);
+			const updatedThreadHash = createThreadHash(updatedThread);
 
-      if (lastThreadHash === updatedThreadHash){
-        return;
-      }
+			if (lastThreadHash === updatedThreadHash) {
+				return;
+			}
 
-      lastThreadHash = updatedThreadHash;
+			lastThreadHash = updatedThreadHash;
 
 			messages = thread.messages;
 			progressText = updatedThread.progressText || '';
@@ -55,16 +56,27 @@
 		}
 	});
 
+  let lastScrollTimeout: number;
 	const scrollToBottom = () => {
 		if (Date.now() - lastScrollByUser < 1000) {
 			// User scrolled, don't take control
 			return;
 		}
 
+		isScrollingProgrammatically = true;
+
+    if (lastScrollTimeout) {
+      clearTimeout(lastScrollTimeout);
+    }
+
 		scrollContainer.scroll({
 			top: scrollContainer.scrollHeight,
 			behavior: 'smooth'
 		});
+
+		lastScrollTimeout = setTimeout(() => {
+			isScrollingProgrammatically = false;
+		}, 500);
 	};
 
 	const ensureColorSet = () => {
@@ -182,43 +194,55 @@
 	<div
 		class="flex flex-1 flex-col space-y-4 overflow-y-auto p-4"
 		bind:this={scrollContainer}
-		onscroll={() => (lastScrollByUser = Date.now())}
+		onscroll={() => {
+			if (isScrollingProgrammatically) {
+				return;
+			}
+
+			lastScrollByUser = Date.now();
+		}}
 	>
 		{#if showDebugInfo}
-      <div class="flex flex-col space-y-4">
-        <div class="flex gap-2">
-          <Button
-            primary={showDebugInfoTab === 'system-prompt'}
-            onclick={() => (showDebugInfoTab = 'system-prompt')}
-          >
-            System Prompt
-          </Button>
-          <Button
-            primary={showDebugInfoTab === 'debug-actions'}
-            onclick={() => (showDebugInfoTab = 'debug-actions')}
-          >
-            Debug Info
-          </Button>
-        </div>
-        {#if showDebugInfoTab === 'system-prompt'}
-          <Heading level={3} class="text-emerald-400">System Prompt</Heading>
-          <div class="text-slate-300 marked-container">
-            {@html marked(thread.config.instructions)}
-          </div>
-        {:else if showDebugInfoTab === 'debug-actions'}
-          <Heading level={3} class="text-emerald-400">Debug Actions</Heading>
-          <div>
-            <Button onclick={() => console.log(client.getMessages(thread.id))}>Log Thread Messages to Console</Button>
-          </div>
-          <div>
-            <Button onclick={() => console.log(client.getRuns(thread.id))}>Log Thread Runs to Console</Button>
-          </div>
-          <div>
-            <Entry title="Run ID" bind:value={debugActionRunId} />
-            <Button onclick={() => console.log(client.getRunSteps(thread.id, debugActionRunId))}>Log Run Steps to Console</Button>
-          </div>
-        {/if}
-      </div>
+			<div class="flex flex-col space-y-4">
+				<div class="flex gap-2">
+					<Button
+						primary={showDebugInfoTab === 'system-prompt'}
+						onclick={() => (showDebugInfoTab = 'system-prompt')}
+					>
+						System Prompt
+					</Button>
+					<Button
+						primary={showDebugInfoTab === 'debug-actions'}
+						onclick={() => (showDebugInfoTab = 'debug-actions')}
+					>
+						Debug Info
+					</Button>
+				</div>
+				{#if showDebugInfoTab === 'system-prompt'}
+					<Heading level={3} class="text-emerald-400">System Prompt</Heading>
+					<div class="marked-container text-slate-300">
+						{@html marked(thread.config.instructions)}
+					</div>
+				{:else if showDebugInfoTab === 'debug-actions'}
+					<Heading level={3} class="text-emerald-400">Debug Actions</Heading>
+					<div>
+						<Button onclick={() => console.log(client.getMessages(thread.id))}
+							>Log Thread Messages to Console</Button
+						>
+					</div>
+					<div>
+						<Button onclick={() => console.log(client.getRuns(thread.id))}
+							>Log Thread Runs to Console</Button
+						>
+					</div>
+					<div>
+						<Entry title="Run ID" bind:value={debugActionRunId} />
+						<Button onclick={() => console.log(client.getRunSteps(thread.id, debugActionRunId))}
+							>Log Run Steps to Console</Button
+						>
+					</div>
+				{/if}
+			</div>
 		{:else}
 			{#each messages as message (message.timestamp)}
 				<ChatMessage

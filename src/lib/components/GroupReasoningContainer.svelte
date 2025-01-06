@@ -217,6 +217,16 @@
 				});
 			},
 
+			async onPreHandleToolCall(threadId: string, toolNamesOrdered: string[]): Promise<void> {
+				// Sort createPersona to the front, so subsequent tools can use its created persona
+				const createPersonaIndex = toolNamesOrdered.indexOf(createPersonaFunctionName);
+
+				if (createPersonaIndex !== -1) {
+					toolNamesOrdered.splice(createPersonaIndex, 1);
+					toolNamesOrdered.unshift(createPersonaFunctionName);
+				}
+			},
+
 			async onHandleToolCall(
 				threadId: string,
 				name: string,
@@ -660,7 +670,7 @@
 				>
 			</div>
 			<div class="bg-slate-700 px-4 py-2">
-				<span class={['text-slate-500', 'text-xs'].join(' ')}>Preprocessing Results:</span>
+				<span class={['text-slate-500', 'text-xs'].join(' ')}>Prompt Preprocessing:</span>
 				<div class="flex flex-row flex-wrap items-center gap-2">
 					{#each preprocessingJobs as job, index}
 						<InfoBulb
