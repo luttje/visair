@@ -10,6 +10,7 @@
 	import { onMount } from 'svelte';
 	import ProgressText from './ProgressText.svelte';
 	import Heading from './Heading.svelte';
+	import { marked } from 'marked';
 
 	type Props = {
 		thread: AssistantThread;
@@ -21,7 +22,8 @@
 
 	let userInput = $state('');
 	let isLoading = $state(false);
-	let showSystemPrompt = $state(false);
+	let showDebugInfo = $state(false);
+  let showDebugInfoTab = $state('system-prompt');
 	let messages = $state(thread.messages);
 	let lastScrollByUser = $state(0);
   let lastThreadHash = $state('');
@@ -125,12 +127,12 @@
 	>
 		<div slot="actions">
 			<button
-				aria-label="Show system prompt"
-				title="Show system prompt"
-				onclick={() => (showSystemPrompt = !showSystemPrompt)}
+				aria-label="Show debug info"
+				title="Show debug info"
+				onclick={() => (showDebugInfo = !showDebugInfo)}
 				class="cursor-pointer opacity-35 transition-transform hover:scale-125"
 			>
-				{#if showSystemPrompt}
+				{#if showDebugInfo}
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						fill="none"
@@ -180,9 +182,34 @@
 		bind:this={scrollContainer}
 		onscroll={() => (lastScrollByUser = Date.now())}
 	>
-		{#if showSystemPrompt}
-			<Heading level={3} class="text-emerald-400">System Prompt</Heading>
-			{thread.config.instructions}
+		{#if showDebugInfo}
+      <div class="flex flex-col space-y-4">
+        <div class="flex gap-2">
+          <Button
+            primary={showDebugInfoTab === 'system-prompt'}
+            onclick={() => (showDebugInfoTab = 'system-prompt')}
+          >
+            System Prompt
+          </Button>
+          <Button
+            primary={showDebugInfoTab === 'debug-actions'}
+            onclick={() => (showDebugInfoTab = 'debug-actions')}
+          >
+            Debug Info
+          </Button>
+        </div>
+        {#if showDebugInfoTab === 'system-prompt'}
+          <Heading level={3} class="text-emerald-400">System Prompt</Heading>
+          <div class="text-slate-300 marked-container">
+            {@html marked(thread.config.instructions)}
+          </div>
+        {:else if showDebugInfoTab === 'debug-actions'}
+          <Heading level={3} class="text-emerald-400">Debug Actions</Heading>
+          <div>
+            <Button onclick={() => console.log(client.getMessages(thread.id))}>Log Messages to Console</Button>
+          </div>
+        {/if}
+      </div>
 		{:else}
 			{#each messages as message (message.timestamp)}
 				<ChatMessage
@@ -215,7 +242,7 @@
 								// Should fit in Zelda, e.g: Land of Hyrule, Link, Zelda, Ganon, Triforce, Master Sword, etc.
 								// Should mention the incantation of the Patronus Charm in Harry Potter: Expecto Patronum
 								// Should mention the Game of Thrones character who is beheaded in the ninth episode: Eddard "Ned" Stark, known as The Quiet Wolf
-								// Should mention the name of the last song in the second album by Boards of Canada. The second album is Geogaddi, and the last song is "Magic Window"
+								// Should mention the name of the last song in the second album by Boards of Canada. The second album is Geogaddi, and the last song is "Magic Window" or "Corsair" (Magic Window is last, but fully silent)
 							}
 						}}
 					/>

@@ -3,7 +3,7 @@
 	import { marked } from 'marked';
   import Conditional from '../Conditional.svelte';
   import PrivateShield from './PrivateShield.svelte';
-  
+
   type Props = {
     content: string;
     sender: Member;
@@ -47,7 +47,7 @@
         'max-w-lg',
         'text-gray-900',
         isOwn ? 'bg-emerald-300' : sender.color,
-        'break-words'
+        'marked-container',
       ].join(' ')}>
         {@html marked(content)}
       </div>

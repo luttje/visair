@@ -22,6 +22,7 @@
 	import { PreprocessingPipeline, type PreprocessingJob } from '$lib/assistants/Preprocessing';
 	import { preprocessors } from '$lib/assistants/configs/preprocessors';
 	import { marked } from 'marked';
+	import { applyInputWrapper } from '$lib/Utilities';
 
 	type Props = {};
 
@@ -504,7 +505,7 @@
 
 				thread.messages.push({
 					id: messageId,
-					content: processedUserInput,
+					content: applyInputWrapper(processedUserInput),
 					sender: 'user',
 					timestamp: new Date().toISOString()
 				});
@@ -555,7 +556,7 @@
 							// Should fit in Zelda, e.g: Land of Hyrule, Link, Zelda, Ganon, Triforce, Master Sword, etc.
 							// Should mention the incantation of the Patronus Charm in Harry Potter: Expecto Patronum
 							// Should mention the Game of Thrones character who is beheaded in the ninth episode: Eddard "Ned" Stark, known as The Quiet Wolf
-							// Should mention the name of the last song in the second album by Boards of Canada. The second album is Geogaddi, and the last song is "Magic Window"
+							// Should mention the name of the last song in the second album by Boards of Canada. The second album is Geogaddi, and the last song is "Magic Window" or "Corsair" (Magic Window is last, but fully silent)
 						}
 					}}
 				/>
@@ -575,7 +576,7 @@
 							colors={job.preprocessor.color}
 							pulsing={job.status !== 'completed'}
 						>
-							<div class="max-h-[500px] overflow-auto">
+							<div class="max-h-[500px] overflow-auto marked-container">
 								{@html marked(job.result)}
 							</div>
 						</InfoBulb>

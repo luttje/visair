@@ -40,3 +40,7 @@ ol, ul {
 .glow-container {
   display: inline-block;
 }
+
+.marked-container pre {
+  white-space: pre-wrap;
+}

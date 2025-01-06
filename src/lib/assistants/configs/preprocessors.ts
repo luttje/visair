@@ -1,3 +1,4 @@
+import { applyInputWrapper } from "$lib/Utilities";
 import type { AssistantClient } from "../AssistantClient";
 import type { PreprocessingProcessor } from "../Preprocessing";
 import promptBreakIntoParts from './prompts/breakIntoParts.md?raw';
@@ -43,11 +44,7 @@ export const preprocessors: PreprocessingProcessor[] = [
     color: { text: 'text-blue-400', background: 'bg-blue-400' },
     instructions: promptOrganizeForExperts,
     process: async function (client: AssistantClient, promptResult: string | undefined, originalPrompt: string) {
-      const prompt = [
-        '<input>',
-        promptResult ?? originalPrompt,
-        '</input>\n',
-      ].join('\n');
+      const prompt = applyInputWrapper(promptResult ?? originalPrompt);
 
       console.log('Prompt:', prompt, this.instructions);
 

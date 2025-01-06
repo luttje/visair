@@ -23,3 +23,15 @@ export function getRandomColor() {
 export function getUniqueElementId(): string {
   return (Math.random() * 10e15).toString(16);
 }
+
+export function applyWrapper(input: string, wrapper: string): string {
+  return [
+    `<${wrapper}>`,
+    input,
+    `</${wrapper}>`,
+  ].join('\n');
+}
+
+export function applyInputWrapper(input: string): string {
+  return applyWrapper(input, 'input');
+}
