@@ -3,7 +3,7 @@ export type ToolsConfig = {
   function: {
     name: string;
     description: string;
-    parameters: {
+    parameters?: {
       type: "object";
       properties: {
         [key: string]: {

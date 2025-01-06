@@ -5,7 +5,7 @@
 	import type { AssistantClient } from '$lib/assistants/AssistantClient';
 	import GroupTitle from './Chat/GroupTitle.svelte';
 	import ChatMessage from './Chat/ChatMessage.svelte';
-	import { getRandomColor } from '$lib/Utilities';
+	import { getRandomColor, testUserInput } from '$lib/Utilities';
 	import { threadStore, getSender } from '$lib/assistants/ThreadStore.svelte';
 	import { onMount } from 'svelte';
 	import ProgressText from './ProgressText.svelte';
@@ -245,13 +245,7 @@
 								sendMessage();
 								e.preventDefault();
 							} else if (e.key === 'ArrowUp' && e.shiftKey) {
-								// Test string for quick testing (based on https://arxiv.org/pdf/2307.05300)
-								userInput =
-									'Write a short, one-paragraph background story of an NPC for the next Legend of Zelda game. The background story should mention (1) the incantation of the Patronus Charm in Harry Potter (2) the name of a character who is beheaded in the ninth episode of the Game of Thrones TV series, and (3) the name of the last song in the second album by Boards of Canada.';
-								// Should fit in Zelda, e.g: Land of Hyrule, Link, Zelda, Ganon, Triforce, Master Sword, etc.
-								// Should mention the incantation of the Patronus Charm in Harry Potter: Expecto Patronum
-								// Should mention the Game of Thrones character who is beheaded in the ninth episode: Eddard "Ned" Stark, known as The Quiet Wolf
-								// Should mention the name of the last song in the second album by Boards of Canada. The second album is Geogaddi, and the last song is "Magic Window" or "Corsair" (Magic Window is last, but fully silent)
+								userInput = testUserInput;
 							}
 						}}
 					/>

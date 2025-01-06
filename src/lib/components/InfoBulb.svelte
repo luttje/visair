@@ -45,6 +45,7 @@
 		'group',
 		'size-6',
 		'relative',
+    'z-50',
 		className,
 	].join(' ')}
 >

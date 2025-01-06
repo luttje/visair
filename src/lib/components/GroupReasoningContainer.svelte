@@ -8,7 +8,9 @@
 	import {
 		createPersonaFunctionName,
 		projectLeadAssistant,
-		sendInstructionsFunctionName
+		sendInstructionsFunctionName,
+    retrieveTaskInfoName,
+    storeTaskInfoName,
 	} from '$lib/assistants/configs/projectLeadAssistant';
 	import Button from './Button.svelte';
 	import Container from './Container.svelte';
@@ -22,7 +24,7 @@
 	import { PreprocessingPipeline, type PreprocessingJob } from '$lib/assistants/Preprocessing';
 	import { preprocessors } from '$lib/assistants/configs/preprocessors';
 	import { marked } from 'marked';
-	import { applyInputWrapper } from '$lib/Utilities';
+	import { applyInputWrapper, testProcessedUserInput, testUserInput } from '$lib/Utilities';
 
 	type Props = {};
 
@@ -185,6 +187,14 @@
 		return textResult;
 	};
 
+  // TODO: See if this is any good for maintaining task info
+  type PersonaId = string;
+  type TaskInfo = {
+    description: string;
+    data: string;
+  };
+  const personaTaskInfo = new Map<PersonaId, TaskInfo>();
+
 	/**
 	 * Enables callbacks for threads. Only active once preprocessing is done
 	 * and we know that threadIds will exist in the thread store.
@@ -226,14 +236,41 @@
 					const { personaId, instructions, relevantNewData } = parameters;
 
 					return await handleSendInstructions(personaId, instructions, relevantNewData);
-				}
+				} else if (name === storeTaskInfoName) {
+          const { personaId, description, relevantNewData } = parameters;
+
+          personaTaskInfo.set(personaId, {
+            description,
+            data: relevantNewData
+          });
+
+          console.log('Stored task info for personaId:', personaId, personaTaskInfo);
+
+          return 'Task info stored successfully.';
+        } else if (name === retrieveTaskInfoName) {
+          const { personaId } = parameters;
+
+          const taskInfo = personaTaskInfo.get(personaId);
+
+          if (!taskInfo) {
+            console.warn('Task info not found for personaId:', personaId, personaTaskInfo);
+            return 'No task info found with the given personaId. Ask them specifically for what you need using the ' + sendInstructionsFunctionName + ' function.';
+          }
+
+          console.log('Retrieved task info for personaId:', personaId, taskInfo);
+
+          return taskInfo.data;
+        }
 
 				return undefined;
 			},
 
 			onComplete(threadId: string) {
 				console.log('onComplete | Run completed', threadId);
-        isLoading = false;
+
+        // Stop loading if this is the first thread
+        if ($threadStore.values().next().value?.id === threadId)
+          isLoading = false;
 			},
 
 			onError(threadId: string, error) {
@@ -351,9 +388,11 @@
 	const start = async () => {
 		if (!client) return;
 
+    isLoading = true;
+
 		// Force clean if custom instructions are enabled, so that the new assistant can be created
 		if (enableCustomInstructions && cachedProjectLead) {
-			forceClearCachedProjectLead(client);
+			await forceClearCachedProjectLead(client);
 		}
 
 		if (browser && cachedProjectLead) {
@@ -396,6 +435,8 @@
 			config: assistant,
 			messages: []
 		});
+
+    isLoading = false;
 	};
 
 	const forceClearThreads = async (client: AssistantClient) => {
@@ -475,8 +516,14 @@
 		try {
 			enablePreprocessingCallbacks(client);
 
-			// Sends the message through a set of AI's that preprocess the message, breaking it down into smaller parts
-			const processedUserInput = await preprocessingPipeline.start(userInput);
+      let processedUserInput: string;
+
+      if (userInput !== 'test') {
+			  // Sends the message through a set of AI's that preprocess the message, breaking it down into smaller parts
+			  processedUserInput = await preprocessingPipeline.start(userInput);
+      } else {
+        processedUserInput = testProcessedUserInput; // for quick testing
+      }
 
 			console.log(processedUserInput);
 			enableThreadCallbacks(client);
@@ -550,13 +597,7 @@
 							sendMessage();
 							e.preventDefault();
 						} else if (e.key === 'ArrowUp' && e.shiftKey) {
-							// Test string for quick testing (based on https://arxiv.org/pdf/2307.05300)
-							userInput =
-								'Write a short, one-paragraph background story of an NPC for the next Legend of Zelda game. The background story should mention (1) the incantation of the Patronus Charm in Harry Potter (2) the name of a character who is beheaded in the ninth episode of the Game of Thrones TV series, and (3) the name of the last song in the second album by Boards of Canada.';
-							// Should fit in Zelda, e.g: Land of Hyrule, Link, Zelda, Ganon, Triforce, Master Sword, etc.
-							// Should mention the incantation of the Patronus Charm in Harry Potter: Expecto Patronum
-							// Should mention the Game of Thrones character who is beheaded in the ninth episode: Eddard "Ned" Stark, known as The Quiet Wolf
-							// Should mention the name of the last song in the second album by Boards of Canada. The second album is Geogaddi, and the last song is "Magic Window" or "Corsair" (Magic Window is last, but fully silent)
+							userInput = testUserInput;
 						}
 					}}
 				/>
@@ -641,10 +682,10 @@
 	<Label>Actions</Label>
 	{#if client}
 		{#if $threadStore.size > 0}
-			<Button onclick={clearThreads} disabled={isLoading}>Remove All Threads</Button>
+			<Button onclick={clearThreads} bind:disabled={isLoading}>Remove All Threads</Button>
 		{/if}
 		{#if cachedProjectLead}
-			<Button onclick={clearCachedProjectLead} disabled={isLoading}>Clear Cached Project Leader Assistant</Button>
+			<Button onclick={clearCachedProjectLead} bind:disabled={isLoading}>Clear Cached Project Leader Assistant</Button>
 		{/if}
 	{/if}
 </div>
