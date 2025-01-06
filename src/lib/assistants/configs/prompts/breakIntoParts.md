@@ -60,8 +60,9 @@ TASK BREAKDOWN:
 7. List effects of climate change
 8. Define 'global food security'
 9. Using the definitions from steps 1 and 8, describe the relationship between climate change and global food security
-10. Using the elements from steps 2-5, determine what data is needed to analyze the impact of climate change on global food security
-11. Using the data identified in step 10 and applying the criteria from steps 2-5, analyze the impact defined in step 1 of climate change (causes from step 6, effects from step 7) on global food security (defined in step 8)
+10. Using the elements from steps 2-5, determine what data is needed to analyze the impact of climate change on global food security (causes from step 6, effects from step 7)
+11. Provide the data identified in step 10
+12. Using the framework established in steps 2-5 and the information gathered in steps 9 and 11, analyze the impact of climate change on global food security
 ```
 
 Example 3:
@@ -78,9 +79,9 @@ TASK BREAKDOWN:
 7. List examples of technology in modern education
 8. Using the definitions from steps 1-3, describe the role of technology in modern education
 9. Based on the elements and criteria from steps 4-6, determine what data is needed to discuss the role of technology in modern education
-10. Using the framework established in steps 4-6 and the information gathered in steps 1-9, discuss the role of technology in modern education
+10. Fill the data requirements identified in step 9, where possible matching the examples from step 7
+11. Using the framework established in steps 4-6 and the information gathered in steps 8 and 10, discuss the role of technology in modern education
 ```
-
 
 Example 4:
 ```

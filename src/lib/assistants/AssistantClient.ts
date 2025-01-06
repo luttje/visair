@@ -373,6 +373,7 @@ export class AssistantClient {
    * and then deletes the assistant and thread.
    */
   async messageTransientAssistant(config: Omit<AssistantConfig, 'id'>, message: MessageRequest) {
+    // TODO: Cache this assistant for reuse, like we do for the project lead
     const assistantId = await this.createAssistant(config);
     const threadId = await this.createThread();
 

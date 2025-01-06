@@ -22,7 +22,7 @@ export const projectLeadAssistant: Omit<AssistantConfig, 'id'> = {
           properties: {
             personaId: {
               type: 'string',
-              description: 'The ID of the persona so you can keep track of them.',
+              description: 'The ID of the persona to track them, their expertise is contained in this ID.',
             },
             name: {
               type: 'string',
