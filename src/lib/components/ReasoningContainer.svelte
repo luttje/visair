@@ -17,9 +17,10 @@
 		thread: AssistantThread;
 		client: AssistantClient;
 		withChat?: boolean;
+    class?: string;
 	};
 
-	let { thread, client, withChat = false, ...attrs }: Props = $props();
+	let { thread, client, withChat = false, class: className, ...attrs }: Props = $props();
 
 	let userInput = $state('');
 	let isLoading = $state(false);
@@ -132,7 +133,7 @@
 </script>
 
 <div
-	class="flex h-[500px] w-96 flex-col overflow-hidden rounded-lg border border-slate-700 bg-slate-800"
+  class={['flex', 'h-[500px]', 'w-96', 'flex-col', 'overflow-hidden', 'rounded-lg', 'border', 'border-slate-700', 'bg-slate-800', className].join(' ')}
 	{...attrs}
 >
 	<GroupTitle

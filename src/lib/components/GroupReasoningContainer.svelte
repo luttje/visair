@@ -26,6 +26,7 @@
 	import { marked } from 'marked';
 	import { applyInputWrapper, testProcessedUserInput, testUserInput } from '$lib/Utilities';
 	import type { ToolsConfig } from '$lib/assistants/Tools';
+	import { selfSimulatingAssistant } from '$lib/assistants/configs/selfSimulatingAssistant';
 
 	type Props = {};
 
@@ -37,6 +38,7 @@
 
 	let cachedProjectLead: AssistantConfig | null = $state(null);
 	let enableCustomInstructions: boolean = $state(false);
+  let enableSoloMode: boolean = $state(false);
 	let customInstructions: string = $state(projectLeadAssistant.instructions);
 	let isBusyAnswering = $state(false);
 	let isLoading: boolean = $state(false);
@@ -62,6 +64,11 @@
 	onMount(() => {
 		if (browser) {
 			const cachedData = localStorage.getItem('projectLeadAssistant');
+			const cachedSoloMode = localStorage.getItem('selfSimulatingAssistant');
+
+      if (cachedSoloMode === 'true') {
+        enableSoloMode = true;
+      }
 
 			if (!cachedData) return;
 
@@ -473,10 +480,10 @@
 		}
 
 		const assistantConfig = {
-			...projectLeadAssistant
+      ...(enableSoloMode ? selfSimulatingAssistant : projectLeadAssistant),
 		};
 
-		if (enableCustomInstructions) {
+		if (!enableSoloMode && enableCustomInstructions) {
 			assistantConfig.instructions = customInstructions;
 		}
 
@@ -487,8 +494,12 @@
 		};
 
 		if (browser) {
-			localStorage.setItem('projectLeadAssistant', JSON.stringify(assistant));
-			cachedProjectLead = assistant;
+      if (!enableSoloMode) {
+			  localStorage.setItem('projectLeadAssistant', JSON.stringify(assistant));
+			  cachedProjectLead = assistant;
+      } else {
+        localStorage.setItem('selfSimulatingAssistant', 'true');
+      }
 		}
 
 		const threadId = await client.createThread();
@@ -605,7 +616,7 @@
 
 			const messageId = await client.addMessage(threadId, {
 				role: 'user',
-				content: processedUserInput
+				content: applyInputWrapper(processedUserInput)
 			});
 
 			threadStore.update((store) => {
@@ -615,7 +626,7 @@
 
 				thread.messages.push({
 					id: messageId,
-					content: applyInputWrapper(processedUserInput),
+					content: processedUserInput,
 					sender: 'user',
 					timestamp: new Date().toISOString()
 				});
@@ -696,6 +707,7 @@
 				<ReasoningContainer
 					{thread}
 					{client}
+          class={[enableSoloMode ? 'flex-1' : ''].join(' ')}
 					withChat={!isLoading && isBusyAnswering && index === 0}
 				/>
 			{/each}
@@ -723,6 +735,7 @@
 			<div slot="actions" class="flex w-full max-w-[500px] flex-col gap-4">
 				<Checkbox
 					bind:checked={enableCustomInstructions}
+          disabled={enableSoloMode}
 					label="Enable Custom Project Lead System Prompt"
 				/>
 				{#if enableCustomInstructions}
@@ -734,6 +747,12 @@
 						<TextAreaEntry label="Custom Instructions" bind:value={customInstructions} rows={10} />
 					</div>
 				{/if}
+
+				<Checkbox
+          bind:checked={enableSoloMode}
+          disabled={enableCustomInstructions}
+          label="Enable Solo Mode (after preprocessing a single assistant will self-simulate collaboration)"
+        />
 
 				<Button onclick={start} primary>Start</Button>
 			</div>
