@@ -76,9 +76,6 @@ export class PreprocessingPipeline {
   /**
    * Start with a user prompt, then process it through each preprocessor in the pipeline.
    * The result of each preprocessor is passed to the next preprocessor in the pipeline.
-   *
-   * TODO: This might be risky if the preprocessors hallucinate/mangle the original prompt.
-   * TODO: Perhaps we should combine the original prompt again
    */
   public async start(originalPrompt: string): Promise<string> {
     let promptResult: string | undefined = undefined;

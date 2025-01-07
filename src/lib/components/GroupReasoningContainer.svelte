@@ -188,7 +188,9 @@
 		return textResult;
 	};
 
-	// TODO: See if this is any good for maintaining task info
+	// TODO:  Rework this to not store a bunch of stuff in memory.
+  //        Also I don't know if it really improves the assistant's performance.
+  //        Perhaps there's a better way to handle this.
 	type PersonaId = string;
 	type TaskInfo = {
 		description: string;
