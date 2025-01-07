@@ -52,6 +52,12 @@ While letting OpenAI-o1 write some mundane code for me, I noticed that at one po
 
 ## ❓ How it works
 
+There's two modes in which this prototype can run:
+* Multiple assistants
+* Single assistant
+
+### Multiple assistants
+
 1. Your task prompt is first fed through two preprocessors (both `gpt-4o-mini`):
 
     a. [the first preprocessor](https://github.com/luttje/visair/blob/86703cef8a0f9584b83b35a8fb763087c96f050a/src/lib/assistants/configs/prompts/breakIntoParts.md) will break your task into smaller steps. It makes note of dependencies between steps.
@@ -67,3 +73,11 @@ While letting OpenAI-o1 write some mundane code for me, I noticed that at one po
 5. Once all personas have completed all their steps and the Project Lead has confirmed the task is completed, the project lead will give you the final result.
 
 6. At that point a chat input with the Project Lead will be available for you to give further instructions or ask questions.
+
+### Single assistant
+
+1. Like with the Multiple assistants mode, your task prompt is first fed through two preprocessors (see above).
+
+2. Then the preprocessed task is fed to [a 'Self Simulating' AI assistant](https://github.com/luttje/visair/blob/16d850558319d01788c23b2fcae3ead2b82a5344/src/lib/assistants/configs/selfSimulatingAssistant.ts). This assistant will generate a response normally, but thanks to the broken down task it will perform better than directly prompting the same model.
+
+3. I guess this mode proves that the multiple assistants mode is fun, but really not necessary for the simple examples I've tried.
