@@ -560,16 +560,23 @@
 		}
 	};
 
-	const clearCachedProjectLead = async () => {
-		if (!client || !cachedProjectLead) return;
+	const clearCachedAssistant = async () => {
+		if (!client) return;
 
 		if (
 			confirm(
-				'Are you sure you want to remove the cached project lead assistant? This will also remove all threads and cannot be undone.'
+				'Are you sure you want to remove the cached assistant? This will also remove all threads and cannot be undone.'
 			)
 		) {
 			isLoading = true;
-			await forceClearCachedProjectLead(client);
+
+      if (cachedProjectLead) {
+			  await forceClearCachedProjectLead(client);
+      } else {
+        localStorage.removeItem('selfSimulatingAssistant');
+        await forceClearThreads(client);
+      }
+
 			isLoading = false;
 		}
 	};
@@ -766,9 +773,9 @@
 		{#if $threadStore.size > 0}
 			<Button onclick={clearThreads} bind:disabled={isLoading}>Remove All Threads</Button>
 		{/if}
-		{#if cachedProjectLead}
-			<Button onclick={clearCachedProjectLead} bind:disabled={isLoading}
-				>Clear Cached Project Leader Assistant</Button
+		{#if cachedProjectLead || (enableSoloMode && $threadStore.size > 0)}
+			<Button onclick={clearCachedAssistant} bind:disabled={isLoading}
+				>Clear Cached Assistant</Button
 			>
 		{/if}
 	{/if}
