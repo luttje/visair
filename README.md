@@ -12,10 +12,10 @@ This prototype visualizes Multi-Persona Self-Collaboration in large language mod
 
 ## 🚀 Getting Started
 
-1. Clone the repository:
+1. Clone (or fork) the repository:
 
   ```bash
-  git clone
+  git clone https://github.com/luttje/visair
   ```
 
 2. Install dependencies:
