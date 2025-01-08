@@ -1,6 +1,6 @@
 # 🔮 VisAIR (prototype)
 
-*<u>Vis</u>ualizing <u>A</u>rtificial <u>I</u>ntelligence <u>R</u>easoning*
+*<ins>Vis</ins>ualizing <ins>A</ins>rtificial <ins>I</ins>ntelligence <ins>R</ins>easoning*
 
 This prototype visualizes Multi-Persona Self-Collaboration in large language models. You are expected to bring your own OpenAI API key. This project currently uses the [OpenAI GPT-4o-mini model](https://platform.openai.com/docs/models#gpt-4o-mini) in combination with the [Assistants API](https://platform.openai.com/docs/assistants/overview).
 
